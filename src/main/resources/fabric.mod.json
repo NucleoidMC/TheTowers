@@ -1,23 +1,23 @@
 {
-  "schemaVersion": 1,
-  "id": "the_towers",
-  "version": "${version}",
-  "name": "The Towers",
-  "description": "The Towers, yay!!",
-  "authors": [
-    "Hugman"
-  ],
-  "license": "MIT",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "com.hugman.the_towers.TheTowers"
-    ]
-  },
-  "depends": {
-    "fabricloader": ">=0.9.1",
-    "fabric": "*",
-    "minecraft": "1.16.4",
-    "plasmid": "0.4.x"
-  }
+	"schemaVersion": 1,
+	"id": "the_towers",
+	"version": "${version}",
+	"name": "The Towers",
+	"description": "The Towers, yay!!",
+	"authors": [
+		"Hugman"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.hugman.the_towers.TheTowers"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.9.1",
+		"fabric": "*",
+		"minecraft": "1.16.5",
+		"plasmid": "0.4.x"
+	}
 }

@@ -1,193 +1,168 @@
 package com.hugman.the_towers.game;
 
+import com.google.common.collect.Multimap;
 import com.hugman.the_towers.config.TheTowersConfig;
+import com.hugman.the_towers.game.map.TheTowersMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.util.ActionResult;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.event.*;
-import xyz.nucleoid.plasmid.game.player.JoinResult;
-import xyz.nucleoid.plasmid.game.player.PlayerSet;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
-import xyz.nucleoid.plasmid.util.PlayerRef;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
-import com.hugman.the_towers.game.map.TheTowersMap;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
+import xyz.nucleoid.plasmid.game.GameSpace;
+import xyz.nucleoid.plasmid.game.event.GameCloseListener;
+import xyz.nucleoid.plasmid.game.event.GameOpenListener;
+import xyz.nucleoid.plasmid.game.event.GameTickListener;
+import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
+import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
+import xyz.nucleoid.plasmid.game.player.GameTeam;
+import xyz.nucleoid.plasmid.game.player.JoinResult;
+import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.PlayerRef;
 
 public class TheTowersActive {
-    private final TheTowersConfig config;
+	public final GameSpace gameSpace;
+	private final TheTowersConfig config;
+	private final TheTowersMap gameMap;
 
-    public final GameSpace gameSpace;
-    private final TheTowersMap gameMap;
+	private final Object2ObjectMap<PlayerRef, TheTowersParticipant> participants = new Object2ObjectOpenHashMap<>();
+	private final TheTowersSpawner spawnLogic;
 
-    // TODO replace with ServerPlayerEntity if players are removed upon leaving
-    private final Object2ObjectMap<PlayerRef, TheTowersParticipant> participants;
-    private final TheTowersSpawnLogic spawnLogic;
-    private final boolean ignoreWinState;
+	private long gameStartTick;
 
-    private long gameStartTick;
+	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config) {
+		this.gameSpace = gameSpace;
+		this.config = config;
+		this.gameMap = map;
+		this.spawnLogic = new TheTowersSpawner(gameSpace);
+	}
 
-    private TheTowersActive(GameSpace gameSpace, TheTowersMap map, GlobalWidgets widgets, TheTowersConfig config, Set<PlayerRef> participants) {
-        this.gameSpace = gameSpace;
-        this.config = config;
-        this.gameMap = map;
-        this.spawnLogic = new TheTowersSpawnLogic(gameSpace, map);
-        this.participants = new Object2ObjectOpenHashMap<>();
+	public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, Multimap<GameTeam, ServerPlayerEntity> players) {
+		gameSpace.openGame(game -> {
+			TheTowersActive active = new TheTowersActive(gameSpace, map, config);
+			active.addPlayers(players);
 
-        for (PlayerRef player : participants) {
-            this.participants.put(player, new TheTowersParticipant());
-        }
+			game.setRule(GameRule.CRAFTING, RuleResult.ALLOW);
+			game.setRule(GameRule.PORTALS, RuleResult.DENY);
+			game.setRule(GameRule.PVP, RuleResult.ALLOW);
+			game.setRule(GameRule.HUNGER, RuleResult.ALLOW);
+			game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
+			game.setRule(GameRule.INTERACTION, RuleResult.ALLOW);
+			game.setRule(GameRule.BLOCK_DROPS, RuleResult.ALLOW);
+			game.setRule(GameRule.THROW_ITEMS, RuleResult.ALLOW);
 
-        this.ignoreWinState = this.participants.size() <= 1;
-    }
+			game.on(GameOpenListener.EVENT, active::open);
+			game.on(GameCloseListener.EVENT, active::close);
 
-    public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config) {
-        gameSpace.openGame(game -> {
-            Set<PlayerRef> participants = gameSpace.getPlayers().stream()
-                    .map(PlayerRef::of)
-                    .collect(Collectors.toSet());
-            GlobalWidgets widgets = new GlobalWidgets(game);
-            TheTowersActive active = new TheTowersActive(gameSpace, map, widgets, config, participants);
+			game.on(OfferPlayerListener.EVENT, player -> JoinResult.ok());
+			game.on(PlayerAddListener.EVENT, active::addPlayer);
 
-            game.setRule(GameRule.CRAFTING, RuleResult.DENY);
-            game.setRule(GameRule.PORTALS, RuleResult.DENY);
-            game.setRule(GameRule.PVP, RuleResult.DENY);
-            game.setRule(GameRule.HUNGER, RuleResult.DENY);
-            game.setRule(GameRule.FALL_DAMAGE, RuleResult.DENY);
-            game.setRule(GameRule.INTERACTION, RuleResult.DENY);
-            game.setRule(GameRule.BLOCK_DROPS, RuleResult.DENY);
-            game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
-            game.setRule(GameRule.UNSTABLE_TNT, RuleResult.DENY);
+			game.on(GameTickListener.EVENT, active::tick);
 
-            game.on(GameOpenListener.EVENT, active::onOpen);
-            game.on(GameCloseListener.EVENT, active::onClose);
+			game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
+		});
+	}
 
-            game.on(OfferPlayerListener.EVENT, player -> JoinResult.ok());
-            game.on(PlayerAddListener.EVENT, active::addPlayer);
-            game.on(PlayerRemoveListener.EVENT, active::removePlayer);
+	// GENERAL GAME MANAGEMENT
+	private void open() {
+		ServerWorld world = this.gameSpace.getWorld();
+		this.gameStartTick = world.getTime();
+		this.participants.forEach((playerRef, participant) -> {
+			ServerPlayerEntity player = playerRef.getEntity(world);
+			if(player != null) {
+				player.setGameMode(GameMode.SURVIVAL);
+				this.resetPlayer(player);
+				this.respawnPlayer(player);
+			}
+		});
+	}
 
-            game.on(GameTickListener.EVENT, active::tick);
+	private void tick() {
+		ServerWorld world = this.gameSpace.getWorld();
+		long time = world.getTime();
 
-            game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
-            game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
-        });
-    }
+		this.gameMap.getTeamRegions().forEach((team, teamRegion) -> this.participants.forEach((playerRef, participant) -> {
+			if(team != participant.getTeam()) {
+				ServerPlayerEntity player = playerRef.getEntity(world);
+				if(player != null) {
+					if(teamRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+						// TODO: add a point to the team of the player and celebrate it :fireworks:
+						this.respawnPlayer(player);
+					};
+				}
+			}
+		}));
+	}
 
-    private void onOpen() {
-        ServerWorld world = this.gameSpace.getWorld();
+	private void close() {
+		for(ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+			player.setGameMode(GameMode.ADVENTURE);
+		}
+	}
 
-        for (PlayerRef ref : this.participants.keySet()) {
-            ref.ifOnline(world, this::spawnParticipant);
-        }
+	// GENERAL PLAYER MANAGEMENT
+	private void addPlayers(Multimap<GameTeam, ServerPlayerEntity> players) {
+		players.forEach((team, player) -> {
+			TheTowersParticipant participant = new TheTowersParticipant(team);
+			this.participants.put(PlayerRef.of(player), participant);
+		});
+	}
 
-        this.gameStartTick = world.getTime();
-        // TODO setup logic
-    }
+	private void addPlayer(ServerPlayerEntity player) {
+		if(!this.participants.containsKey(PlayerRef.of(player))) {
+			player.setGameMode(GameMode.SPECTATOR);
+			this.resetPlayer(player);
+			this.respawnPlayer(player);
+		}
+	}
 
-    private void onClose() {
-        // TODO teardown logic
-    }
+	public void respawnPlayer(ServerPlayerEntity player) {
+		TheTowersParticipant participant = getParticipant(player);
+		if(participant != null) {
+			BlockPos spawnPosition = new BlockPos(this.gameMap.getTeamRegion(participant.getTeam()).getSpawn().getCenter());
+			this.spawnLogic.spawnPlayerAt(player, spawnPosition);
+		}
+		else {
+			this.spawnLogic.spawnPlayerAtCenter(player);
+		}
+	}
 
-    private void addPlayer(ServerPlayerEntity player) {
-        if (!this.participants.containsKey(PlayerRef.of(player))) {
-            this.spawnSpectator(player);
-        }
-    }
+	@Nullable
+	public TheTowersParticipant getParticipant(PlayerEntity player) {
+		return this.participants.get(PlayerRef.of(player));
+	}
 
-    private void removePlayer(ServerPlayerEntity player) {
-        this.participants.remove(PlayerRef.of(player));
-    }
+	public void resetPlayer(ServerPlayerEntity player) {
+		this.clearPlayer(player);
+		player.inventory.clear();
+		player.getEnderChestInventory().clear();
+		player.clearStatusEffects();
+		player.getHungerManager().setFoodLevel(20);
+		player.setExperienceLevel(0);
+		player.setExperiencePoints(0);
+		player.setHealth(player.getMaxHealth());
+	}
 
-    private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-        // TODO handle damage
-        this.spawnParticipant(player);
-        return ActionResult.FAIL;
-    }
+	public void clearPlayer(ServerPlayerEntity player) {
+		player.extinguish();
+		player.fallDistance = 0.0F;
+	}
 
-    private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-        // TODO handle death
-        this.spawnParticipant(player);
-        return ActionResult.FAIL;
-    }
-
-    private void spawnParticipant(ServerPlayerEntity player) {
-        this.spawnLogic.resetPlayer(player, GameMode.ADVENTURE);
-        this.spawnLogic.spawnPlayer(player);
-    }
-
-    private void spawnSpectator(ServerPlayerEntity player) {
-        this.spawnLogic.resetPlayer(player, GameMode.SPECTATOR);
-        this.spawnLogic.spawnPlayer(player);
-    }
-
-    private void tick() {
-        ServerWorld world = this.gameSpace.getWorld();
-        long time = world.getTime();
-        // TODO tick logic
-    }
-
-    private void broadcastWin(WinResult result) {
-        ServerPlayerEntity winningPlayer = result.getWinningPlayer();
-
-        Text message;
-        if (winningPlayer != null) {
-            message = winningPlayer.getDisplayName().shallowCopy().append(" has won the game!").formatted(Formatting.GOLD);
-        } else {
-            message = new LiteralText("The game ended, but nobody won!").formatted(Formatting.GOLD);
-        }
-
-        PlayerSet players = this.gameSpace.getPlayers();
-        players.sendMessage(message);
-        players.sendSound(SoundEvents.ENTITY_VILLAGER_YES);
-    }
-
-    private WinResult checkWinResult() {
-        // for testing purposes: don't end the game if we only ever had one participant
-        if (this.ignoreWinState) {
-            return WinResult.no();
-        }
-
-        ServerWorld world = this.gameSpace.getWorld();
-        ServerPlayerEntity winningPlayer = null;
-
-        // TODO win result logic
-        return WinResult.no();
-    }
-
-    static class WinResult {
-        final ServerPlayerEntity winningPlayer;
-        final boolean win;
-
-        private WinResult(ServerPlayerEntity winningPlayer, boolean win) {
-            this.winningPlayer = winningPlayer;
-            this.win = win;
-        }
-
-        static WinResult no() {
-            return new WinResult(null, false);
-        }
-
-        static WinResult win(ServerPlayerEntity player) {
-            return new WinResult(player, true);
-        }
-
-        public boolean isWin() {
-            return this.win;
-        }
-
-        public ServerPlayerEntity getWinningPlayer() {
-            return this.winningPlayer;
-        }
-    }
+	// GENERAL LISTENERS
+	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+		if(participants.containsKey(PlayerRef.of(player))) {
+			this.resetPlayer(player);
+			this.respawnPlayer(player);
+		}
+		else {
+			this.spawnLogic.spawnPlayerAtCenter(player);
+		}
+		return ActionResult.FAIL;
+	}
 }

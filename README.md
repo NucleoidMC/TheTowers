@@ -1,5 +1,5 @@
-# UHC
-An open source effort to recreate the UHC minigame for Minecraft 1.16 using Fabric.
+# The Towers
+An open source effort to recreate the The Towers minigame for Minecraft 1.16 using Fabric.
 
 Although this mod is functional in its current state, it is still very work-in-progress!
 
