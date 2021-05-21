@@ -1,5 +1,6 @@
 package com.hugman.the_towers.game;
 
+import com.hugman.the_towers.config.TheTowersConfig;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.util.ActionResult;
@@ -31,11 +32,11 @@ public class TheTowersActive {
     private final TheTowersMap gameMap;
 
     // TODO replace with ServerPlayerEntity if players are removed upon leaving
-    private final Object2ObjectMap<PlayerRef, TheTowersPlayer> participants;
+    private final Object2ObjectMap<PlayerRef, TheTowersParticipant> participants;
     private final TheTowersSpawnLogic spawnLogic;
-    private final TheTowersStageManager stageManager;
     private final boolean ignoreWinState;
-    private final TheTowersTimerBar timerBar;
+
+    private long gameStartTick;
 
     private TheTowersActive(GameSpace gameSpace, TheTowersMap map, GlobalWidgets widgets, TheTowersConfig config, Set<PlayerRef> participants) {
         this.gameSpace = gameSpace;
@@ -45,12 +46,10 @@ public class TheTowersActive {
         this.participants = new Object2ObjectOpenHashMap<>();
 
         for (PlayerRef player : participants) {
-            this.participants.put(player, new TheTowersPlayer());
+            this.participants.put(player, new TheTowersParticipant());
         }
 
-        this.stageManager = new TheTowersStageManager();
         this.ignoreWinState = this.participants.size() <= 1;
-        this.timerBar = new TheTowersTimerBar(widgets);
     }
 
     public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config) {
@@ -87,10 +86,12 @@ public class TheTowersActive {
 
     private void onOpen() {
         ServerWorld world = this.gameSpace.getWorld();
+
         for (PlayerRef ref : this.participants.keySet()) {
             ref.ifOnline(world, this::spawnParticipant);
         }
-        this.stageManager.onOpen(world.getTime(), this.config);
+
+        this.gameStartTick = world.getTime();
         // TODO setup logic
     }
 
@@ -133,24 +134,6 @@ public class TheTowersActive {
     private void tick() {
         ServerWorld world = this.gameSpace.getWorld();
         long time = world.getTime();
-
-        TheTowersStageManager.IdleTickResult result = this.stageManager.tick(time, gameSpace);
-
-        switch (result) {
-            case CONTINUE_TICK:
-                break;
-            case TICK_FINISHED:
-                return;
-            case GAME_FINISHED:
-                this.broadcastWin(this.checkWinResult());
-                return;
-            case GAME_CLOSED:
-                this.gameSpace.close();
-                return;
-        }
-
-        this.timerBar.update(this.stageManager.finishTime - time, this.config.timeLimitSecs * 20);
-
         // TODO tick logic
     }
 

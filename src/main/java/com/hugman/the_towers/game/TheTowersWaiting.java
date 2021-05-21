@@ -1,5 +1,6 @@
 package com.hugman.the_towers.game;
 
+import com.hugman.the_towers.config.TheTowersConfig;
 import net.minecraft.util.ActionResult;
 import xyz.nucleoid.plasmid.game.*;
 import xyz.nucleoid.plasmid.game.event.*;
@@ -25,7 +26,7 @@ public class TheTowersWaiting {
 
     public static GameOpenProcedure open(GameOpenContext<TheTowersConfig> context) {
         TheTowersConfig config = context.getConfig();
-        TheTowersMapGenerator generator = new TheTowersMapGenerator(config.mapConfig);
+        TheTowersMapGenerator generator = new TheTowersMapGenerator(config);
         TheTowersMap map = generator.build();
 
         BubbleWorldConfig worldConfig = new BubbleWorldConfig()
