@@ -3,10 +3,12 @@ package com.hugman.the_towers.game.map;
 import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
 import xyz.nucleoid.plasmid.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.map.template.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.util.BlockBounds;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,10 +17,18 @@ public class TheTowersMap {
 	private final MapTemplate template;
 	private final TheTowersConfig config;
 	private final Map<GameTeam, TheTowersTeamRegion> teamRegions = new HashMap<>();
+	private final BlockBounds center;
 
-	public TheTowersMap(MapTemplate template, TheTowersConfig config) {
+	public TheTowersMap(MapTemplate template, TheTowersConfig config, BlockBounds center) {
 		this.template = template;
 		this.config = config;
+		if(center != null) {
+			this.center = center;
+		}
+		else {
+			TheTowers.LOGGER.warn("Missing map center");
+			this.center = new BlockBounds(new BlockPos(0, 50, 0), new BlockPos(0, 50, 0));
+		}
 	}
 
 	public void addTeamRegions(GameTeam team, TheTowersTeamRegion region) {
@@ -30,6 +40,10 @@ public class TheTowersMap {
 		if(region.getPool() == null) {
 			TheTowers.LOGGER.warn("Missing pool for {}", team.getKey());
 		}
+	}
+
+	public BlockPos getCenter() {
+		return new BlockPos(center.getCenter());
 	}
 
 	public Map<GameTeam, TheTowersTeamRegion> getTeamRegions() {

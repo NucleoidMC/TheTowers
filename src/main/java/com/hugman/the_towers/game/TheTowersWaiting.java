@@ -5,9 +5,15 @@ import com.google.common.collect.Multimap;
 import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersMapGenerator;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.fantasy.BubbleWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
@@ -16,6 +22,7 @@ import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.GameWaitingLobby;
 import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.TeamSelectionLobby;
+import xyz.nucleoid.plasmid.game.event.AttackEntityListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
@@ -45,7 +52,7 @@ public class TheTowersWaiting {
 
 		BubbleWorldConfig worldConfig = new BubbleWorldConfig()
 				.setGenerator(map.asGenerator(context.getServer()))
-				.setDefaultGameMode(GameMode.SPECTATOR);
+				.setDefaultGameMode(GameMode.ADVENTURE);
 
 		return context.createOpenProcedure(worldConfig, game -> {
 			GameWaitingLobby.applyTo(game, config.getPlayerConfig());
@@ -59,19 +66,20 @@ public class TheTowersWaiting {
 			game.on(PlayerAddListener.EVENT, waiting::addPlayer);
 			game.on(PlayerDamageListener.EVENT, waiting::damagePlayer);
 			game.on(PlayerDeathListener.EVENT, waiting::killPlayer);
+			game.on(AttackEntityListener.EVENT, waiting::damageEntity);
 		});
 	}
 
 	private StartResult requestStart() {
-		Multimap<GameTeam, ServerPlayerEntity> players = HashMultimap.create();
-		this.teamSelection.allocate(players::put);
+		Multimap<GameTeam, ServerPlayerEntity> playerMap = HashMultimap.create();
+		this.teamSelection.allocate(playerMap::put);
 
-		TheTowersActive.open(this.gameSpace, this.map, this.config, players);
+		TheTowersActive.open(this.gameSpace, this.map, this.config, playerMap);
 		return StartResult.OK;
 	}
 
 	private void addPlayer(ServerPlayerEntity player) {
-		// TODO: spawn player
+		this.tpPlayer(player);
 	}
 
 	private ActionResult damagePlayer(ServerPlayerEntity player, DamageSource source, float amount) {
@@ -80,7 +88,18 @@ public class TheTowersWaiting {
 
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		player.setHealth(20.0f);
-		// TODO: respawn player
+		this.tpPlayer(player);
 		return ActionResult.FAIL;
+	}
+
+	private ActionResult damageEntity(ServerPlayerEntity entity, Hand hand, Entity entity1, EntityHitResult entityHitResult) {
+		return ActionResult.FAIL;
+	}
+
+	private void tpPlayer(ServerPlayerEntity player) {
+		BlockPos pos = this.map.getCenter();
+		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+		this.gameSpace.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
+		player.teleport(this.gameSpace.getWorld(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);
 	}
 }

@@ -3,12 +3,14 @@
 	"translation": "game.the_towers.classic",
 	"map": "the_towers:classic",
 	"players": {
-		"min": 1,
+		"min": 2,
 		"threshold": 4,
 		"max": 12
 	},
 	"teams": [
 		{"key": "blue", "display": "Blue", "color": "blue"},
 		{"key": "red", "display": "Red", "color": "red"}
-	]
+	],
+	"team_health": 10,
+	"stealing": false
 }

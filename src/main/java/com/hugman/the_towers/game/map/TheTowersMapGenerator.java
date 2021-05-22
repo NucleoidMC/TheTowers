@@ -7,6 +7,7 @@ import xyz.nucleoid.plasmid.game.player.GameTeam;
 import xyz.nucleoid.plasmid.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.map.template.MapTemplateMetadata;
 import xyz.nucleoid.plasmid.map.template.MapTemplateSerializer;
+import xyz.nucleoid.plasmid.util.BlockBounds;
 
 import java.io.IOException;
 
@@ -22,7 +23,8 @@ public class TheTowersMapGenerator {
 		try {
 			MapTemplate template = MapTemplateSerializer.INSTANCE.loadFromResource(this.config.getMap());
 			MapTemplateMetadata metadata = template.getMetadata();
-			TheTowersMap map = new TheTowersMap(template, this.config);
+			BlockBounds center = metadata.getFirstRegionBounds("center");
+			TheTowersMap map = new TheTowersMap(template, this.config, center);
 
 			for(GameTeam team : this.config.getTeams()) {
 				TheTowersTeamRegion region = TheTowersTeamRegion.fromTemplate(team, metadata);
