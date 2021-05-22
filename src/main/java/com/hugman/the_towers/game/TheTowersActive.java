@@ -5,8 +5,12 @@ import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
@@ -15,20 +19,25 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
+import xyz.nucleoid.plasmid.game.event.BreakBlockListener;
 import xyz.nucleoid.plasmid.game.event.GameCloseListener;
 import xyz.nucleoid.plasmid.game.event.GameOpenListener;
 import xyz.nucleoid.plasmid.game.event.GameTickListener;
 import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
+import xyz.nucleoid.plasmid.game.event.PlaceBlockListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.BlockBounds;
+import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
 public class TheTowersActive {
@@ -72,8 +81,9 @@ public class TheTowersActive {
 			game.on(PlayerAddListener.EVENT, active::addPlayer);
 
 			game.on(GameTickListener.EVENT, active::tick);
-
-			game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
+			game.on(PlayerDeathListener.EVENT, active::killPlayer);
+			game.on(BreakBlockListener.EVENT, active::breakBlock);
+			game.on(PlaceBlockListener.EVENT, active::placeBlock);
 		});
 	}
 
@@ -87,6 +97,7 @@ public class TheTowersActive {
 				player.setGameMode(GameMode.SURVIVAL);
 				this.resetPlayer(player);
 				this.respawnPlayer(player);
+				this.resetPlayerStuff(player);
 			}
 		});
 		hasEnded = false;
@@ -108,6 +119,7 @@ public class TheTowersActive {
 						player.setGameMode(GameMode.SURVIVAL);
 						this.resetPlayer(player);
 						this.respawnPlayer(player);
+						this.resetPlayerStuff(player);
 						participant.isRespawning = false;
 					}
 				}
@@ -205,7 +217,7 @@ public class TheTowersActive {
 		if(!this.participantMap.containsKey(PlayerRef.of(player))) {
 			player.setGameMode(GameMode.SPECTATOR);
 			this.resetPlayer(player);
-			this.respawnPlayer(player);
+			this.spawnLogic.spawnPlayerAtCenter(player);
 		}
 	}
 
@@ -219,6 +231,9 @@ public class TheTowersActive {
 		}
 	}
 
+	public void resetPlayerStuff(ServerPlayerEntity player) {
+		TheTowersParticipant participant = getParticipant(player);
+		if(participant != null) {
 	@Nullable
 	public TheTowersParticipant getParticipant(PlayerEntity player) {
 		return this.participantMap.get(PlayerRef.of(player));
@@ -246,7 +261,7 @@ public class TheTowersActive {
 	}
 
 	// GENERAL LISTENERS
-	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		PlayerRef ref = PlayerRef.of(player);
 		if(participantMap.containsKey(ref)) {
 			TheTowersParticipant participant = participantMap.get(ref);
@@ -258,5 +273,25 @@ public class TheTowersActive {
 		}
 		this.spawnLogic.spawnPlayerAtCenter(player);
 		return ActionResult.FAIL;
+	}
+
+	private ActionResult placeBlock(ServerPlayerEntity playerEntity, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
+		for(BlockBounds bounds : this.gameMap.getProtectedBounds()) {
+			if(bounds.contains(pos)) {
+				playerEntity.sendMessage(new TranslatableText("text.the_towers.cannot_place").formatted(Formatting.RED), true);
+				return ActionResult.FAIL;
+			}
+		}
+		return ActionResult.SUCCESS;
+	}
+
+	private ActionResult breakBlock(ServerPlayerEntity playerEntity, BlockPos pos) {
+		for(BlockBounds bounds : this.gameMap.getProtectedBounds()) {
+			if(bounds.contains(pos)) {
+				playerEntity.sendMessage(new TranslatableText("text.the_towers.cannot_break").formatted(Formatting.RED), true);
+				return ActionResult.FAIL;
+			}
+		}
+		return ActionResult.SUCCESS;
 	}
 }

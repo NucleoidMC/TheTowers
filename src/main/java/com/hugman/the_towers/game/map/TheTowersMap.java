@@ -10,7 +10,9 @@ import xyz.nucleoid.plasmid.map.template.MapTemplate;
 import xyz.nucleoid.plasmid.map.template.TemplateChunkGenerator;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TheTowersMap {
@@ -18,6 +20,7 @@ public class TheTowersMap {
 	private final TheTowersConfig config;
 	private final Map<GameTeam, TheTowersTeamRegion> teamRegions = new HashMap<>();
 	private final BlockBounds center;
+	private final List<BlockBounds> protectedBounds = new ArrayList<>();
 
 	public TheTowersMap(MapTemplate template, TheTowersConfig config, BlockBounds center) {
 		this.template = template;
@@ -40,6 +43,14 @@ public class TheTowersMap {
 		if(region.getPool() == null) {
 			TheTowers.LOGGER.warn("Missing pool for {}", team.getKey());
 		}
+	}
+
+	public void addProtectedBounds(BlockBounds bounds) {
+		protectedBounds.add(bounds);
+	}
+
+	public List<BlockBounds> getProtectedBounds() {
+		return protectedBounds;
 	}
 
 	public BlockPos getCenter() {

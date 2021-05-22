@@ -29,6 +29,7 @@ public class TheTowersMapGenerator {
 				TheTowersTeamRegion region = TheTowersTeamRegion.fromTemplate(team, metadata);
 				map.addTeamRegions(team, region);
 			}
+			metadata.getRegionBounds("protected").forEach(map::addProtectedBounds);
 
 			return map;
 		}
