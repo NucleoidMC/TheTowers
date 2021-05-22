@@ -40,6 +40,7 @@ import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
 public class TheTowersActive {
 	public final GameSpace gameSpace;
@@ -48,22 +49,26 @@ public class TheTowersActive {
 
 	private final Object2ObjectMap<PlayerRef, TheTowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
 	private final Object2ObjectMap<GameTeam, TheTowersTeam> teamMap = new Object2ObjectOpenHashMap<>();
-	private final TheTowersSpawner spawnLogic;
+
+	private final TheTowersSpawner spawner;
+	private final TheTowersSidebar sidebar;
 
 	private long gameStartTick;
 	private boolean hasEnded;
 	private long gameCloseTick = -1L;
 
-	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config) {
+	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, GlobalWidgets widgets) {
 		this.gameSpace = gameSpace;
 		this.config = config;
 		this.gameMap = map;
-		this.spawnLogic = new TheTowersSpawner(gameSpace, map);
+		this.spawner = new TheTowersSpawner(gameSpace, map);
+		this.sidebar = TheTowersSidebar.create(widgets, this);
 	}
 
 	public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, Multimap<GameTeam, ServerPlayerEntity> playerMap) {
 		gameSpace.openGame(game -> {
-			TheTowersActive active = new TheTowersActive(gameSpace, map, config);
+			GlobalWidgets widgets = new GlobalWidgets(game);
+			TheTowersActive active = new TheTowersActive(gameSpace, map, config, widgets);
 			active.addPlayers(playerMap);
 
 			game.setRule(GameRule.CRAFTING, RuleResult.ALLOW);
@@ -102,6 +107,7 @@ public class TheTowersActive {
 			}
 		});
 		hasEnded = false;
+		this.sidebar.update();
 	}
 
 	private void tick() {
@@ -161,6 +167,7 @@ public class TheTowersActive {
 	private void checkWin() {
 		ServerWorld world = this.gameSpace.getWorld();
 
+		this.sidebar.update();
 		teamMap.forEach((team, theTowersTeam) -> {
 			if(theTowersTeam.getHealth() <= 0) {
 				participantMap.forEach((playerRef, participant) -> {
@@ -218,17 +225,17 @@ public class TheTowersActive {
 		if(!this.participantMap.containsKey(PlayerRef.of(player))) {
 			player.setGameMode(GameMode.SPECTATOR);
 			this.resetPlayer(player);
-			this.spawnLogic.spawnPlayerAtCenter(player);
+			this.spawner.spawnPlayerAtCenter(player);
 		}
 	}
 
 	public void respawnPlayer(ServerPlayerEntity player) {
 		TheTowersParticipant participant = getParticipant(player);
 		if(participant != null) {
-			this.spawnLogic.spawnPlayerAtSpawn(player, participant.getTeam());
+			this.spawner.spawnPlayerAtSpawn(player, participant.getTeam());
 		}
 		else {
-			this.spawnLogic.spawnPlayerAtCenter(player);
+			this.spawner.spawnPlayerAtCenter(player);
 		}
 	}
 
@@ -243,9 +250,17 @@ public class TheTowersActive {
 		}
 	}
 
+	public Object2ObjectMap<PlayerRef, TheTowersParticipant> getParticipantMap() {
+		return participantMap;
+	}
+
 	@Nullable
 	public TheTowersParticipant getParticipant(PlayerEntity player) {
 		return this.participantMap.get(PlayerRef.of(player));
+	}
+
+	public Object2ObjectMap<GameTeam, TheTowersTeam> getTeamMap() {
+		return teamMap;
 	}
 
 	@Nullable
@@ -280,7 +295,7 @@ public class TheTowersActive {
 			ItemScatterer.spawn(this.gameSpace.getWorld(), player.getBlockPos(), player.inventory);
 			this.resetPlayer(player);
 		}
-		this.spawnLogic.spawnPlayerAtCenter(player);
+		this.spawner.spawnPlayerAtCenter(player);
 		return ActionResult.FAIL;
 	}
 
