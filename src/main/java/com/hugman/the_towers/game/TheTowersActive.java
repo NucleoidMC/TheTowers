@@ -234,6 +234,14 @@ public class TheTowersActive {
 	public void resetPlayerStuff(ServerPlayerEntity player) {
 		TheTowersParticipant participant = getParticipant(player);
 		if(participant != null) {
+			player.equipStack(EquipmentSlot.HEAD, ItemStackBuilder.of(Items.LEATHER_HELMET).setColor(participant.getTeam().getColor()).setUnbreakable().build());
+			player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(Items.LEATHER_CHESTPLATE).setColor(participant.getTeam().getColor()).setUnbreakable().build());
+			player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(Items.LEATHER_LEGGINGS).setColor(participant.getTeam().getColor()).setUnbreakable().build());
+			player.equipStack(EquipmentSlot.FEET, ItemStackBuilder.of(Items.LEATHER_BOOTS).setColor(participant.getTeam().getColor()).setUnbreakable().build());
+			player.inventory.insertStack(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(8).build());
+		}
+	}
+
 	@Nullable
 	public TheTowersParticipant getParticipant(PlayerEntity player) {
 		return this.participantMap.get(PlayerRef.of(player));
