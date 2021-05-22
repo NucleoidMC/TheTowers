@@ -34,7 +34,7 @@ public class TheTowersMapGenerator {
 			return map;
 		}
 		catch(IOException e) {
-			throw new GameOpenException(new LiteralText("Failed to load template"), e);
+			throw new GameOpenException(new LiteralText("Failed to load map template"), e);
 		}
 	}
 }

@@ -6,6 +6,7 @@ import com.hugman.the_towers.game.map.TheTowersMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -236,9 +237,9 @@ public class TheTowersActive {
 		if(participant != null) {
 			player.equipStack(EquipmentSlot.HEAD, ItemStackBuilder.of(Items.LEATHER_HELMET).setColor(participant.getTeam().getColor()).setUnbreakable().build());
 			player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(Items.LEATHER_CHESTPLATE).setColor(participant.getTeam().getColor()).setUnbreakable().build());
-			player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(Items.LEATHER_LEGGINGS).setColor(participant.getTeam().getColor()).setUnbreakable().build());
+			player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(Items.LEATHER_LEGGINGS).setColor(participant.getTeam().getColor()).addEnchantment(Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
 			player.equipStack(EquipmentSlot.FEET, ItemStackBuilder.of(Items.LEATHER_BOOTS).setColor(participant.getTeam().getColor()).setUnbreakable().build());
-			player.inventory.insertStack(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(8).build());
+			player.inventory.insertStack(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(6).build());
 		}
 	}
 

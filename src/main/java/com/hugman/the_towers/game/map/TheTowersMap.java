@@ -36,13 +36,6 @@ public class TheTowersMap {
 
 	public void addTeamRegions(GameTeam team, TheTowersTeamRegion region) {
 		this.teamRegions.put(team, region);
-
-		if(region.getSpawn() == null) {
-			TheTowers.LOGGER.warn("Missing spawn for {}", team.getKey());
-		}
-		if(region.getPool() == null) {
-			TheTowers.LOGGER.warn("Missing pool for {}", team.getKey());
-		}
 	}
 
 	public void addProtectedBounds(BlockBounds bounds) {

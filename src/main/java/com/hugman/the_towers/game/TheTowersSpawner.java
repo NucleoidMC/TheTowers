@@ -1,6 +1,7 @@
 package com.hugman.the_towers.game;
 
 import com.hugman.the_towers.game.map.TheTowersMap;
+import com.hugman.the_towers.game.map.TheTowersTeamRegion;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.util.math.BlockPos;
@@ -18,17 +19,18 @@ public class TheTowersSpawner {
 	}
 
 	public void spawnPlayerAtCenter(ServerPlayerEntity player) {
-		this.spawnPlayerAt(player, map.getCenter());
+		this.spawnPlayerAt(player, map.getCenter(), 0.0F, 0.0F);
 	}
 
 	public void spawnPlayerAtSpawn(ServerPlayerEntity player, GameTeam team) {
-		BlockPos spawnPosition = new BlockPos(this.map.getTeamRegion(team).getSpawn().getCenter());
-		this.spawnPlayerAt(player, spawnPosition);
+		TheTowersTeamRegion region = this.map.getTeamRegion(team);
+		BlockPos spawnPosition = new BlockPos(region.getSpawn().getCenter());
+		this.spawnPlayerAt(player, spawnPosition, region.getSpawnYaw(), region.getSpawnPitch());
 	}
 
-	public void spawnPlayerAt(ServerPlayerEntity player, BlockPos pos) {
+	public void spawnPlayerAt(ServerPlayerEntity player, BlockPos pos, float yaw, float pitch) {
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 		this.gameSpace.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
-		player.teleport(this.gameSpace.getWorld(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);
+		player.teleport(this.gameSpace.getWorld(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, yaw, pitch);
 	}
 }
