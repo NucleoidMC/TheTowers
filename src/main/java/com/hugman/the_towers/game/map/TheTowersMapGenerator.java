@@ -12,7 +12,6 @@ import xyz.nucleoid.plasmid.util.BlockBounds;
 import java.io.IOException;
 
 public class TheTowersMapGenerator {
-
 	private final TheTowersConfig config;
 
 	public TheTowersMapGenerator(TheTowersConfig config) {

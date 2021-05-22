@@ -14,6 +14,7 @@ public class TheTowersTeam {
 	public void addHealth() {
 		health++;
 	}
+
 	public void removeHealth() {
 		health--;
 	}

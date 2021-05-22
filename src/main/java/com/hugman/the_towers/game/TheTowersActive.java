@@ -15,7 +15,6 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
@@ -98,13 +97,13 @@ public class TheTowersActive {
 		long time = world.getTime();
 
 		if(!hasEnded) {
-			this.participantMap.forEach((playerRef, participant)-> {
+			this.participantMap.forEach((playerRef, participant) -> {
 				ServerPlayerEntity player = playerRef.getEntity(world);
 				TheTowersTeam playerTeam = getTeam(participant.getTeam());
 
 				if(participant.isRespawning && player != null) {
 					participant.ticksUntilRespawn--;
-					player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int)(participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
+					player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
 					if(participant.ticksUntilRespawn == 0) {
 						player.setGameMode(GameMode.SURVIVAL);
 						this.resetPlayer(player);
