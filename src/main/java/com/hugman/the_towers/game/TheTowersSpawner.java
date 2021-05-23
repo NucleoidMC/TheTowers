@@ -7,7 +7,6 @@ import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.player.GameTeam;
 
 public class TheTowersSpawner {
 	private final GameSpace gameSpace;
@@ -22,7 +21,7 @@ public class TheTowersSpawner {
 		this.spawnPlayerAt(player, map.getCenter(), 0.0F, 0.0F);
 	}
 
-	public void spawnPlayerAtSpawn(ServerPlayerEntity player, GameTeam team) {
+	public void spawnPlayerAtSpawn(ServerPlayerEntity player, TheTowersTeam team) {
 		TheTowersTeamRegion region = this.map.getTeamRegion(team);
 		BlockPos spawnPosition = new BlockPos(region.getSpawn().getCenter());
 		this.spawnPlayerAt(player, spawnPosition, region.getSpawnYaw(), region.getSpawnPitch());

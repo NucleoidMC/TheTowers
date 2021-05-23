@@ -1,6 +1,6 @@
 package com.hugman.the_towers.game;
 
-import net.minecraft.text.LiteralText;
+import fr.catcore.server.translations.api.mixin.text.TranslatableTextMixin;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 import xyz.nucleoid.plasmid.widget.SidebarWidget;
@@ -21,9 +21,19 @@ public class TheTowersSidebar {
 	public void update() {
 		sidebarWidget.set(content -> {
 			content.writeLine("");
-			active.getTeamMap().forEach((team, theTowersTeam) -> {
-				content.writeFormattedTranslated(Formatting.WHITE, "text.the_towers.sidebar.entry", team.getDisplay(), new LiteralText(String.valueOf(theTowersTeam.getHealth())).formatted(Formatting.GREEN));
+			active.getParticipantMap().keys().forEach(team -> {
+				// TODO: make translated when possible
+				content.writeLine(team.getFormatting().toString() + Formatting.BOLD + (team.health <= 0 ? Formatting.STRIKETHROUGH.toString() : "") + team.getDisplay() +
+						Formatting.GRAY + " » " +
+						Formatting.WHITE + team.health +
+						Formatting.GRAY + "/" + Formatting.WHITE +
+						active.config.getTeamHealth() +
+						Formatting.WHITE);
 			});
 		});
+	}
+
+	public void end() {
+		sidebarWidget.close();
 	}
 }

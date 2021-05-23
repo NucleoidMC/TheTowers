@@ -2,6 +2,7 @@ package com.hugman.the_towers.game.map;
 
 import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
+import com.hugman.the_towers.game.TheTowersTeam;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -54,8 +55,8 @@ public class TheTowersMap {
 		return teamRegions;
 	}
 
-	public TheTowersTeamRegion getTeamRegion(GameTeam team) {
-		return teamRegions.get(team);
+	public TheTowersTeamRegion getTeamRegion(TheTowersTeam team) {
+		return teamRegions.get(team.getGameTeam());
 	}
 
 	public ChunkGenerator asGenerator(MinecraftServer server) {

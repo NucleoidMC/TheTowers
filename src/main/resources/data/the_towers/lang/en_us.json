@@ -3,11 +3,12 @@
 	"game.the_towers.classic": "The Towers: Classic",
 	"text.the_towers.cannot_break": "You cannot break blocks here!",
 	"text.the_towers.cannot_place": "You cannot place blocks here!",
+	"text.the_towers.cannot_drop_armor": "You cannot drop your team's armor!",
 	"text.the_towers.nobody_won": "Nobody has won!",
 	"text.the_towers.point_scored": "%s scored a point and removed a health point of the %s team!",
 	"text.the_towers.point_stole": "%s stole a health point from the %s team!",
-	"text.the_towers.respawn_in": "You will respawn in %s seconds",
+	"text.the_towers.respawn_in": "Respawning in %s...",
 	"text.the_towers.team_eliminated": "The %s team has been eliminated!",
-	"text.the_towers.sidebar.entry": "%s: %s points",
+	"text.the_towers.sidebar.entry": "%s: %s",
 	"text.the_towers.team_won": "The %s team has won!"
 }

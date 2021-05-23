@@ -7,6 +7,8 @@ import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersMapGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.util.ActionResult;
@@ -15,6 +17,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameMode;
+import org.apache.commons.lang3.RandomStringUtils;
 import xyz.nucleoid.fantasy.BubbleWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
@@ -30,6 +33,7 @@ import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.PlayerRef;
 
 public class TheTowersWaiting {
 	private final GameSpace gameSpace;
@@ -71,10 +75,23 @@ public class TheTowersWaiting {
 	}
 
 	private StartResult requestStart() {
+		ServerScoreboard scoreboard = gameSpace.getServer().getScoreboard();
+
 		Multimap<GameTeam, ServerPlayerEntity> playerMap = HashMultimap.create();
 		this.teamSelection.allocate(playerMap::put);
 
-		TheTowersActive.open(this.gameSpace, this.map, this.config, playerMap);
+		Multimap<TheTowersTeam, TheTowersParticipant> participantMap = HashMultimap.create();
+		playerMap.keys().forEach(gameTeam -> {
+			Team scoreboardTeam = scoreboard.addTeam(RandomStringUtils.randomAlphabetic(16));
+			TheTowersTeam team = new TheTowersTeam(scoreboardTeam, gameTeam, this.config.getTeamHealth());
+
+			playerMap.get(gameTeam).forEach(player -> {
+				scoreboard.addPlayerToTeam(player.getEntityName(), scoreboardTeam);
+				participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
+			});
+		});
+
+		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);
 		return StartResult.OK;
 	}
 
