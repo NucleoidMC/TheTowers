@@ -82,7 +82,6 @@ public class TheTowersActive {
 			game.on(PlayerAddListener.EVENT, active::addPlayer);
 			game.on(PlayerRemoveListener.EVENT, active::removePlayer);
 
-			game.on(PlayerDamageListener.EVENT, active::damagePlayer);
 			game.on(PlayerDeathListener.EVENT, active::killPlayer);
 			game.on(BreakBlockListener.EVENT, active::breakBlock);
 			game.on(PlaceBlockListener.EVENT, active::placeBlock);
@@ -296,13 +295,6 @@ public class TheTowersActive {
 	}
 
 	// GENERAL LISTENERS
-	private ActionResult damagePlayer(ServerPlayerEntity playerEntity, DamageSource damageSource, float v) {
-		if(playerEntity.getY() < 0.0D) {
-			this.killPlayer(playerEntity, damageSource);
-		}
-		return ActionResult.SUCCESS;
-	}
-
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		TheTowersParticipant participant = getParticipant(player);
 		if(participant != null) {
@@ -358,7 +350,10 @@ public class TheTowersActive {
 	}
 
 	private boolean canStackBeDropped(ItemStack stack) {
-		Item item = stack.getItem();
-		return !(item == Items.LEATHER_HELMET || item == Items.LEATHER_CHESTPLATE || item == Items.LEATHER_LEGGINGS || item == Items.LEATHER_BOOTS);
+		if(stack != null) {
+			Item item = stack.getItem();
+			return item != Items.LEATHER_HELMET && item != Items.LEATHER_CHESTPLATE && item != Items.LEATHER_LEGGINGS && item != Items.LEATHER_BOOTS;
+		}
+		return true;
 	}
 }

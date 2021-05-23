@@ -35,6 +35,8 @@ import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
+import java.util.stream.Collectors;
+
 public class TheTowersWaiting {
 	private final GameSpace gameSpace;
 	private final TheTowersMap map;
@@ -66,8 +68,10 @@ public class TheTowersWaiting {
 
 			game.setRule(GameRule.INTERACTION, RuleResult.ALLOW);
 
-			game.on(RequestStartListener.EVENT, waiting::requestStart);
 			game.on(PlayerAddListener.EVENT, waiting::addPlayer);
+
+			game.on(RequestStartListener.EVENT, waiting::requestStart);
+
 			game.on(PlayerDamageListener.EVENT, waiting::damagePlayer);
 			game.on(PlayerDeathListener.EVENT, waiting::killPlayer);
 			game.on(AttackEntityListener.EVENT, waiting::damageEntity);
@@ -87,8 +91,8 @@ public class TheTowersWaiting {
 
 			playerMap.get(gameTeam).forEach(player -> {
 				scoreboard.addPlayerToTeam(player.getEntityName(), scoreboardTeam);
-				participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
 			});
+			participantMap.putAll(team, playerMap.values().stream().map(player -> new TheTowersParticipant(PlayerRef.of(player), gameSpace)).collect(Collectors.toList()));
 		});
 
 		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);

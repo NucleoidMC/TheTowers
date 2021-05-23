@@ -29,6 +29,7 @@ public class TheTowersSpawner {
 
 	public void spawnPlayerAt(ServerPlayerEntity player, BlockPos pos, float yaw, float pitch) {
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+		player.fallDistance = 0.0f;
 		this.gameSpace.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
 		player.teleport(this.gameSpace.getWorld(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, yaw, pitch);
 	}
