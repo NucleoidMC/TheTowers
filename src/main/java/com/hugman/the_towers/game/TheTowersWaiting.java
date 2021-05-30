@@ -96,9 +96,6 @@ public class TheTowersWaiting {
 			});
 		});
 
-		participantMap.keys().forEach(team -> TheTowers.LOGGER.info("Registered team " + team.getName()));
-
-
 		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);
 		return StartResult.OK;
 	}

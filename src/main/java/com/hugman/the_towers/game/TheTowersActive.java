@@ -129,7 +129,7 @@ public class TheTowersActive {
 					}
 
 					this.participantMap.keys().forEach(enemyTeam -> {
-						if(true) {
+						if(team != enemyTeam) {
 							TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyTeam);
 							if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
 								this.respawnPlayer(player);
