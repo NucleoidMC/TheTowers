@@ -6,20 +6,26 @@ import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersMapGenerator;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import org.apache.commons.lang3.RandomStringUtils;
 import xyz.nucleoid.fantasy.BubbleWorldConfig;
+import xyz.nucleoid.plasmid.entity.FloatingText;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
 import xyz.nucleoid.plasmid.game.GameSpace;
@@ -27,6 +33,7 @@ import xyz.nucleoid.plasmid.game.GameWaitingLobby;
 import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.TeamSelectionLobby;
 import xyz.nucleoid.plasmid.game.event.AttackEntityListener;
+import xyz.nucleoid.plasmid.game.event.GameOpenListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
@@ -61,6 +68,8 @@ public class TheTowersWaiting {
 				.setGenerator(map.asGenerator(context.getServer()))
 				.setDefaultGameMode(GameMode.ADVENTURE);
 
+
+
 		return context.createOpenProcedure(worldConfig, game -> {
 			GameWaitingLobby.applyTo(game, config.getPlayerConfig());
 
@@ -68,6 +77,8 @@ public class TheTowersWaiting {
 			TheTowersWaiting waiting = new TheTowersWaiting(game.getSpace(), map, context.getConfig(), teamSelection);
 
 			game.setRule(GameRule.INTERACTION, RuleResult.ALLOW);
+
+			game.on(GameOpenListener.EVENT, waiting::open);
 
 			game.on(PlayerAddListener.EVENT, waiting::addPlayer);
 
@@ -77,6 +88,19 @@ public class TheTowersWaiting {
 			game.on(PlayerDeathListener.EVENT, waiting::killPlayer);
 			game.on(AttackEntityListener.EVENT, waiting::damageEntity);
 		});
+	}
+
+	private void open() {
+		Text[] GUIDE_LINES = {
+				this.gameSpace.getGameConfig().getNameText().copy().formatted(Formatting.BOLD, Formatting.GOLD),
+				new TranslatableText("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
+				new TranslatableText("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
+				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
+		};
+
+		Vec3d pos = this.map.getCenter().add(0.0D, 2.3D, 0.0D);
+		this.gameSpace.getWorld().getChunk(new BlockPos(pos));
+		FloatingText.spawn(this.gameSpace.getWorld(), pos, GUIDE_LINES, FloatingText.VerticalAlign.CENTER);
 	}
 
 	private StartResult requestStart() {
@@ -119,7 +143,7 @@ public class TheTowersWaiting {
 	}
 
 	private void tpPlayer(ServerPlayerEntity player) {
-		BlockPos pos = this.map.getCenter();
+		BlockPos pos = new BlockPos(this.map.getCenter());
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 		this.gameSpace.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getEntityId());
 		player.teleport(this.gameSpace.getWorld(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);

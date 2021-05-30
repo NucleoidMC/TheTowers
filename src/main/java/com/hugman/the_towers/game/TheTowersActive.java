@@ -28,6 +28,7 @@ import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
+import xyz.nucleoid.plasmid.entity.FloatingText;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.event.*;
@@ -52,7 +53,7 @@ public class TheTowersActive {
 	private final TheTowersSidebar sidebar;
 
 	private long gameStartTick;
-	private boolean hasEnded;
+	private boolean hasEnded = false;
 	private long gameCloseTick = -1L;
 
 	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, GlobalWidgets widgets, Multimap<TheTowersTeam, TheTowersParticipant> participantMap) {
@@ -106,7 +107,7 @@ public class TheTowersActive {
 				this.resetPlayerInventory(player);
 			}
 		});
-		hasEnded = false;
+		this.participantMap.keys().forEach(team -> FloatingText.spawn(world, gameMap.getTeamRegion(team).getPool().getCenterTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", team.getDisplay()).formatted(team.getFormatting())));
 		this.sidebar.update();
 	}
 
@@ -178,13 +179,13 @@ public class TheTowersActive {
 						this.resetPlayer(player);
 					}
 				});
-				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_eliminated", team.getName()));
+				Text msg = FormattingUtil.format(FormattingUtil.X_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_eliminated", team.getName()));
 				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().sendSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
 			}
 
 			if(aliveTeams.size() == 1) {
-				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", team.getName()));
+				Text msg = FormattingUtil.format(FormattingUtil.STAR_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", team.getName()));
 				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().sendSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
 				this.hasEnded = true;

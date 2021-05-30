@@ -5,6 +5,7 @@ import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.TheTowersTeam;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
 import xyz.nucleoid.plasmid.map.template.MapTemplate;
@@ -47,8 +48,8 @@ public class TheTowersMap {
 		return protectedBounds;
 	}
 
-	public BlockPos getCenter() {
-		return new BlockPos(center.getCenter());
+	public Vec3d getCenter() {
+		return center.getCenter();
 	}
 
 	public Map<GameTeam, TheTowersTeamRegion> getTeamRegions() {

@@ -18,7 +18,7 @@ public class TheTowersSpawner {
 	}
 
 	public void spawnPlayerAtCenter(ServerPlayerEntity player) {
-		this.spawnPlayerAt(player, map.getCenter(), 0.0F, 0.0F);
+		this.spawnPlayerAt(player, new BlockPos(map.getCenter()), 0.0F, 0.0F);
 	}
 
 	public void spawnPlayerAtSpawn(ServerPlayerEntity player, TheTowersTeam team) {
