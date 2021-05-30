@@ -2,6 +2,7 @@ package com.hugman.the_towers.game;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersMapGenerator;
@@ -91,9 +92,12 @@ public class TheTowersWaiting {
 
 			playerMap.get(gameTeam).forEach(player -> {
 				scoreboard.addPlayerToTeam(player.getEntityName(), scoreboardTeam);
+				participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
 			});
-			participantMap.putAll(team, playerMap.values().stream().map(player -> new TheTowersParticipant(PlayerRef.of(player), gameSpace)).collect(Collectors.toList()));
 		});
+
+		participantMap.keys().forEach(team -> TheTowers.LOGGER.info("Registered team " + team.getName()));
+
 
 		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);
 		return StartResult.OK;
