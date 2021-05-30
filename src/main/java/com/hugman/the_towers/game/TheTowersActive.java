@@ -270,6 +270,8 @@ public class TheTowersActive {
 				player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(team.dye(Items.LEATHER_CHESTPLATE)).setUnbreakable().build());
 				player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(team.dye(Items.LEATHER_LEGGINGS)).addEnchantment(Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
 				player.equipStack(EquipmentSlot.FEET, ItemStackBuilder.of(team.dye(Items.LEATHER_BOOTS)).setUnbreakable().build());
+				player.inventory.insertStack(ItemStackBuilder.of(Items.WOODEN_SWORD).build());
+				player.inventory.insertStack(ItemStackBuilder.of(Items.WOODEN_PICKAXE).build());
 				player.inventory.insertStack(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(6).build());
 			}
 		}
