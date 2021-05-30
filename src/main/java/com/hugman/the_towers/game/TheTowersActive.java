@@ -1,6 +1,7 @@
 package com.hugman.the_towers.game;
 
 import com.google.common.collect.Multimap;
+import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersTeamRegion;
@@ -38,6 +39,7 @@ import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TheTowersActive {
 	public final GameSpace gameSpace;
@@ -116,7 +118,7 @@ public class TheTowersActive {
 			this.participantMap.forEach((team, participant) -> {
 				ServerPlayerEntity player = participant.getPlayer();
 				if(player != null) {
-					if(participant.isRespawning) {
+					if(participant.isRespawning && team.health > 0) {
 						participant.ticksUntilRespawn--;
 						player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
 						if(participant.ticksUntilRespawn == 0) {
@@ -165,7 +167,9 @@ public class TheTowersActive {
 		ServerWorld world = this.gameSpace.getWorld();
 
 		this.sidebar.update();
-		this.participantMap.keys().forEach(team -> {
+
+		List<TheTowersTeam> aliveTeams = participantMap.keys().stream().filter(team -> team.health > 0).collect(Collectors.toList());
+		aliveTeams.forEach(team -> {
 			if(team.health <= 0) {
 				this.participantMap.get(team).forEach(participant -> {
 					ServerPlayerEntity player = participant.getPlayer();
@@ -174,19 +178,21 @@ public class TheTowersActive {
 						this.resetPlayer(player);
 					}
 				});
-				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(new TranslatableText("text.the_towers.team_eliminated", team.getName()).formatted(Formatting.GOLD)).append("\n"));
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_eliminated", team.getName()));
+				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().sendSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
 			}
-			if(participantMap.keys().size() == 1) {
-				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(new TranslatableText("text.the_towers.team_won", team.getName()).formatted(Formatting.GOLD)).append("\n"));
+
+			if(aliveTeams.size() == 1) {
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", team.getName()));
+				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().sendSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
 				this.hasEnded = true;
 			}
 		});
-
-		if(participantMap.keys().size() == 0) {
+		if(aliveTeams.size() == 0) {
 			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.nobody_won"));
-			this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(new TranslatableText("text.the_towers.nobody_won").formatted(Formatting.GOLD)).append("\n"));
+			this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 			this.hasEnded = true;
 		}
 
@@ -210,8 +216,8 @@ public class TheTowersActive {
 		if(participant != null) {
 			TheTowersTeam team = getTeam(participant);
 			if(team != null) {
+				scoreboard.addPlayerToTeam(player.getEntityName(), team.getScoreboardTeam());
 				if(team.health > 0) {
-					scoreboard.addPlayerToTeam(player.getEntityName(), team.getScoreboardTeam());
 					player.setGameMode(GameMode.SURVIVAL);
 					this.resetPlayer(player);
 					this.respawnPlayer(player);
@@ -241,7 +247,12 @@ public class TheTowersActive {
 		if(participant != null) {
 			TheTowersTeam team = getTeam(participant);
 			if(team != null) {
-				scoreboard.removePlayerFromTeam(player.getEntityName(), team.getScoreboardTeam());
+				try {
+					scoreboard.removePlayerFromTeam(player.getEntityName(), team.getScoreboardTeam());
+				}
+				catch(IllegalStateException e) {
+					TheTowers.LOGGER.warn("Tried to remove " + player.getEntityName() + " from the wrong team " + team.getScoreboardTeam() + "! It may be nonexistent or the player may not be in that team.");
+				}
 			}
 		}
 	}
