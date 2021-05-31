@@ -7,6 +7,7 @@ import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersTeamRegion;
 import com.hugman.the_towers.util.FormattingUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
@@ -15,6 +16,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -26,6 +30,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.entity.FloatingText;
@@ -116,40 +121,48 @@ public class TheTowersActive {
 		long time = world.getTime();
 
 		if(!hasEnded) {
-			this.participantMap.forEach((team, participant) -> {
-				ServerPlayerEntity player = participant.getPlayer();
-				if(player != null) {
-					if(participant.isRespawning && team.health > 0) {
-						participant.ticksUntilRespawn--;
-						player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
-						if(participant.ticksUntilRespawn == 0) {
-							player.setGameMode(GameMode.SURVIVAL);
-							this.resetPlayer(player);
-							this.respawnPlayer(player);
-							this.resetPlayerInventory(player);
-							participant.isRespawning = false;
-						}
-					}
-
-					this.participantMap.keys().forEach(enemyTeam -> {
-						if(team != enemyTeam) {
-							TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyTeam);
-							if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+			this.participantMap.keys().forEach(team -> {
+				BlockBounds pool = this.gameMap.getTeamRegion(team).getPool();
+				if(time % 60 == 0) {
+					pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
+				}
+				this.participantMap.get(team).forEach(participant -> {
+					ServerPlayerEntity player = participant.getPlayer();
+					if(player != null) {
+						if(participant.isRespawning && team.health > 0) {
+							participant.ticksUntilRespawn--;
+							player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
+							if(participant.ticksUntilRespawn == 0) {
+								player.setGameMode(GameMode.SURVIVAL);
+								this.resetPlayer(player);
 								this.respawnPlayer(player);
-								enemyTeam.health--;
-								if(this.config.canSteal()) {
-									this.gameSpace.getPlayers().sendMessage(new TranslatableText("text.the_towers.point_stole", player.getName(), enemyTeam.getName()).formatted(Formatting.YELLOW));
-									team.health++;
-								}
-								else {
-									this.gameSpace.getPlayers().sendMessage(new TranslatableText("text.the_towers.point_scored", player.getName(), enemyTeam.getName()).formatted(Formatting.YELLOW));
-								}
-								this.gameSpace.getPlayers().sendSound(SoundEvents.ENTITY_BLAZE_HURT);
-								this.checkWin();
+								this.resetPlayerInventory(player);
+								participant.isRespawning = false;
 							}
 						}
-					});
-				}
+
+						this.participantMap.keys().forEach(enemyTeam -> {
+							if(team != enemyTeam) {
+								TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyTeam);
+								if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+									this.respawnPlayer(player);
+									enemyTeam.health--;
+									if(this.config.canSteal()) {
+										Text msg = FormattingUtil.format(FormattingUtil.HEALTH_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_stole", player.getName(), enemyTeam.getName()));
+										this.gameSpace.getPlayers().sendMessage(msg);
+										team.health++;
+									}
+									else {
+										Text msg = FormattingUtil.format(FormattingUtil.HEALTH_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_removed", player.getName(), enemyTeam.getName()));
+										this.gameSpace.getPlayers().sendMessage(msg);
+									}
+									this.gameSpace.getPlayers().sendSound(SoundEvents.ENTITY_BLAZE_HURT);
+									this.checkWin();
+								}
+							}
+						});
+					}
+				});
 			});
 		}
 

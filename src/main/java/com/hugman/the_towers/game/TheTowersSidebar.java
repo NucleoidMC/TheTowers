@@ -1,5 +1,6 @@
 package com.hugman.the_towers.game;
 
+import com.hugman.the_towers.util.FormattingUtil;
 import fr.catcore.server.translations.api.mixin.text.TranslatableTextMixin;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
@@ -24,7 +25,7 @@ public class TheTowersSidebar {
 			active.getParticipantMap().keys().forEach(team -> {
 				// TODO: make translated when possible
 				content.writeLine(team.getFormatting().toString() + Formatting.BOLD + (team.health <= 0 ? Formatting.STRIKETHROUGH.toString() : "") + team.getDisplay() +
-						Formatting.GRAY + " » " +
+						Formatting.GRAY + " " + FormattingUtil.GENERAL_PREFIX + " " +
 						Formatting.WHITE + team.health +
 						Formatting.GRAY + "/" + Formatting.WHITE +
 						active.config.getTeamHealth() +
