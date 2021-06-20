@@ -1,7 +1,7 @@
 package com.hugman.the_towers.game;
 
 import com.hugman.the_towers.util.FormattingUtil;
-import fr.catcore.server.translations.api.mixin.text.TranslatableTextMixin;
+import com.hugman.the_towers.util.TickUtil;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 import xyz.nucleoid.plasmid.widget.SidebarWidget;
@@ -30,6 +30,8 @@ public class TheTowersSidebar {
 						Formatting.GRAY + "/" + Formatting.WHITE +
 						active.config.getTeamHealth() +
 						Formatting.WHITE);
+				content.writeLine("");
+				content.writeLine(Formatting.GRAY + "Time: " + Formatting.WHITE + TickUtil.format(active.getGameTime()).getString());
 			});
 		});
 	}

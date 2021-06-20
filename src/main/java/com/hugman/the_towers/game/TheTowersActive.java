@@ -7,7 +7,6 @@ import com.hugman.the_towers.game.map.TheTowersMap;
 import com.hugman.the_towers.game.map.TheTowersTeamRegion;
 import com.hugman.the_towers.util.FormattingUtil;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.particle.Particle;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
@@ -16,8 +15,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleType;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -30,7 +27,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.entity.FloatingText;
@@ -100,6 +96,7 @@ public class TheTowersActive {
 	}
 
 	// GENERAL GAME MANAGEMENT
+
 	private void open() {
 		ServerWorld world = this.gameSpace.getWorld();
 		this.gameStartTick = world.getTime();
@@ -113,13 +110,14 @@ public class TheTowersActive {
 			}
 		});
 		this.participantMap.keys().forEach(team -> FloatingText.spawn(world, gameMap.getTeamRegion(team).getPool().getCenterTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", team.getDisplay()).formatted(team.getFormatting())));
-		this.sidebar.update();
 	}
-
 	private void tick() {
 		ServerWorld world = this.gameSpace.getWorld();
 		long time = world.getTime();
 
+		if(getGameTime() % 20 == 0) {
+			this.sidebar.update();
+		}
 		if(!hasEnded) {
 			this.participantMap.keys().forEach(team -> {
 				BlockBounds pool = this.gameMap.getTeamRegion(team).getPool();
@@ -179,8 +177,6 @@ public class TheTowersActive {
 
 	private void checkWin() {
 		ServerWorld world = this.gameSpace.getWorld();
-
-		this.sidebar.update();
 
 		List<TheTowersTeam> aliveTeams = participantMap.keys().stream().filter(team -> team.health > 0).collect(Collectors.toList());
 		aliveTeams.forEach(team -> {
@@ -378,11 +374,17 @@ public class TheTowersActive {
 		}
 	}
 
+	// UTILITY
 	private boolean canStackBeDropped(ItemStack stack) {
 		if(stack != null) {
 			Item item = stack.getItem();
 			return item != Items.LEATHER_HELMET && item != Items.LEATHER_CHESTPLATE && item != Items.LEATHER_LEGGINGS && item != Items.LEATHER_BOOTS;
 		}
 		return true;
+	}
+
+	public long getGameTime() {
+		ServerWorld world = this.gameSpace.getWorld();
+		return world.getTime() - gameStartTick;
 	}
 }
