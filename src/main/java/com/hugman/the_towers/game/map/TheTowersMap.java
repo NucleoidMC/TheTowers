@@ -52,10 +52,6 @@ public class TheTowersMap {
 		return center.getCenter();
 	}
 
-	public Map<GameTeam, TheTowersTeamRegion> getTeamRegions() {
-		return teamRegions;
-	}
-
 	public TheTowersTeamRegion getTeamRegion(TheTowersTeam team) {
 		return teamRegions.get(team.getGameTeam());
 	}

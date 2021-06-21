@@ -3,12 +3,17 @@ package com.hugman.the_towers.game;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.AbstractTeam;
+import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Formatting;
+import org.apache.commons.lang3.RandomStringUtils;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
+import xyz.nucleoid.plasmid.map.template.MapTemplate;
+import xyz.nucleoid.plasmid.util.BlockBounds;
 
 public class TheTowersTeam {
 	private final Team scoreboardTeam;
@@ -16,8 +21,8 @@ public class TheTowersTeam {
 	private final Text name;
 	public int health;
 
-	TheTowersTeam(Team scoreboardTeam, GameTeam gameTeam, int health) {
-		this.scoreboardTeam = scoreboardTeam;
+	TheTowersTeam(ServerScoreboard scoreboard, GameTeam gameTeam, int health) {
+		this.scoreboardTeam = getOrCreateScoreboardTeam(RandomStringUtils.randomAlphabetic(16), scoreboard);
 		this.gameTeam = gameTeam;
 		this.health = health;
 
@@ -60,5 +65,13 @@ public class TheTowersTeam {
 
 	public ItemStack dye(ItemStack stack) {
 		return this.gameTeam.dye(stack);
+	}
+
+	private static Team getOrCreateScoreboardTeam(String key, ServerScoreboard scoreboard) {
+		Team scoreboardTeam = scoreboard.getTeam(key);
+		if (scoreboardTeam == null) {
+			return scoreboard.addTeam(key);
+		}
+		return scoreboardTeam;
 	}
 }

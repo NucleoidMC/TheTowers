@@ -43,6 +43,8 @@ import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TheTowersWaiting {
@@ -106,18 +108,18 @@ public class TheTowersWaiting {
 	private StartResult requestStart() {
 		ServerScoreboard scoreboard = gameSpace.getServer().getScoreboard();
 
-		Multimap<GameTeam, ServerPlayerEntity> playerMap = HashMultimap.create();
-		this.teamSelection.allocate(playerMap::put);
-
 		Multimap<TheTowersTeam, TheTowersParticipant> participantMap = HashMultimap.create();
-		playerMap.keys().forEach(gameTeam -> {
-			Team scoreboardTeam = scoreboard.addTeam(RandomStringUtils.randomAlphabetic(16));
-			TheTowersTeam team = new TheTowersTeam(scoreboardTeam, gameTeam, this.config.getTeamHealth());
+		Map<GameTeam, TheTowersTeam> gameTeamsToEntries = new HashMap<>(this.config.getTeams().size());
 
-			playerMap.get(gameTeam).forEach(player -> {
-				scoreboard.addPlayerToTeam(player.getEntityName(), scoreboardTeam);
-				participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
-			});
+		teamSelection.allocate((gameTeam, player) -> {
+			// Get or create team
+			TheTowersTeam team = gameTeamsToEntries.get(gameTeam);
+			if (team == null) {
+				team = new TheTowersTeam(scoreboard, gameTeam, this.config.getTeamHealth());
+				gameTeamsToEntries.put(gameTeam, team);
+			}
+			scoreboard.addPlayerToTeam(player.getEntityName(), team.getScoreboardTeam());
+			participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
 		});
 
 		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);
