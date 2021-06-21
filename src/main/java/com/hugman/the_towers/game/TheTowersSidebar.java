@@ -30,9 +30,9 @@ public class TheTowersSidebar {
 						Formatting.GRAY + "/" + Formatting.WHITE +
 						active.config.getTeamHealth() +
 						Formatting.WHITE);
-				content.writeLine("");
-				content.writeLine(Formatting.GRAY + "Time: " + Formatting.WHITE + TickUtil.format(active.getGameTime()).getString());
 			});
+			content.writeLine("");
+			content.writeLine(Formatting.GRAY + "Time: " + Formatting.WHITE + TickUtil.format(active.getGameTime()).getString());
 		});
 	}
 
