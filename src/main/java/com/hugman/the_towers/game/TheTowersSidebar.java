@@ -22,7 +22,7 @@ public class TheTowersSidebar {
 	public void update() {
 		sidebarWidget.set(content -> {
 			content.writeLine("");
-			active.getParticipantMap().keys().forEach(team -> {
+			active.getTeamList().forEach(team -> {
 				// TODO: make translated when possible
 				content.writeLine(team.getFormatting().toString() + Formatting.BOLD + (team.health <= 0 ? Formatting.STRIKETHROUGH.toString() : "") + team.getDisplay() +
 						Formatting.GRAY + " " + FormattingUtil.GENERAL_PREFIX + " " +

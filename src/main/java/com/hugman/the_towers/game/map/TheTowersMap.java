@@ -21,17 +21,15 @@ public class TheTowersMap {
 	private final MapTemplate template;
 	private final TheTowersConfig config;
 	private final Map<GameTeam, TheTowersTeamRegion> teamRegions = new HashMap<>();
-	private final BlockBounds center;
+	private BlockBounds center;
 	private final List<BlockBounds> protectedBounds = new ArrayList<>();
 
 	public TheTowersMap(MapTemplate template, TheTowersConfig config, BlockBounds center) {
 		this.template = template;
 		this.config = config;
-		if(center != null) {
-			this.center = center;
-		}
-		else {
-			TheTowers.LOGGER.warn("Missing map center");
+		this.center = template.getMetadata().getFirstRegionBounds("center");
+		if(center == null) {
+			TheTowers.LOGGER.warn("Missing map center, set to default [0 50 0]");
 			this.center = new BlockBounds(new BlockPos(0, 50, 0), new BlockPos(0, 50, 0));
 		}
 	}

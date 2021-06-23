@@ -48,7 +48,7 @@ public class TheTowersActive {
 	public final TheTowersConfig config;
 	private final TheTowersMap gameMap;
 
-	private final Multimap<TheTowersTeam, TheTowersParticipant> participantMap;
+	private final List<TheTowersTeam> teamList;
 
 	private final TheTowersSpawner spawner;
 	private final TheTowersSidebar sidebar;
@@ -57,16 +57,16 @@ public class TheTowersActive {
 	private boolean hasEnded = false;
 	private long gameCloseTick = -1L;
 
-	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, GlobalWidgets widgets, Multimap<TheTowersTeam, TheTowersParticipant> participantMap) {
+	private TheTowersActive(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, GlobalWidgets widgets, List<TheTowersTeam> teamList) {
 		this.gameSpace = gameSpace;
 		this.config = config;
 		this.gameMap = map;
 		this.spawner = new TheTowersSpawner(gameSpace, map);
 		this.sidebar = TheTowersSidebar.create(widgets, this);
-		this.participantMap = participantMap;
+		this.teamList = teamList;
 	}
 
-	public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, Multimap<TheTowersTeam, TheTowersParticipant> participantMap) {
+	public static void open(GameSpace gameSpace, TheTowersMap map, TheTowersConfig config, List<TheTowersTeam> participantMap) {
 		gameSpace.openGame(game -> {
 			GlobalWidgets widgets = new GlobalWidgets(game);
 			TheTowersActive active = new TheTowersActive(gameSpace, map, config, widgets, participantMap);
@@ -100,7 +100,7 @@ public class TheTowersActive {
 	private void open() {
 		ServerWorld world = this.gameSpace.getWorld();
 		this.gameStartTick = world.getTime();
-		this.participantMap.forEach((team, participant) -> {
+		this.teamList.forEach(team -> team.getParticipants().forEach(participant -> {
 			ServerPlayerEntity player = participant.getPlayer();
 			if(player != null) {
 				player.setGameMode(GameMode.SURVIVAL);
@@ -108,8 +108,8 @@ public class TheTowersActive {
 				this.respawnPlayer(player);
 				this.resetPlayerInventory(player);
 			}
-		});
-		this.participantMap.keys().forEach(team -> FloatingText.spawn(world, gameMap.getTeamRegion(team).getPool().getCenterTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", team.getDisplay()).formatted(team.getFormatting())));
+		}));
+		this.teamList.forEach(team -> FloatingText.spawn(world, gameMap.getTeamRegion(team).getPool().getCenterTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", team.getDisplay()).formatted(team.getFormatting())));
 	}
 	private void tick() {
 		ServerWorld world = this.gameSpace.getWorld();
@@ -119,12 +119,13 @@ public class TheTowersActive {
 			this.sidebar.update();
 		}
 		if(!hasEnded) {
-			this.participantMap.keys().forEach(team -> {
+
+			this.teamList.forEach(team -> {
 				BlockBounds pool = this.gameMap.getTeamRegion(team).getPool();
 				if(time % 60 == 0) {
 					pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
 				}
-				this.participantMap.get(team).forEach(participant -> {
+				team.getParticipants().forEach(participant -> {
 					ServerPlayerEntity player = participant.getPlayer();
 					if(player != null) {
 						if(participant.isRespawning && team.health > 0) {
@@ -139,7 +140,7 @@ public class TheTowersActive {
 							}
 						}
 
-						this.participantMap.keys().forEach(enemyTeam -> {
+						this.teamList.forEach(enemyTeam -> {
 							if(team != enemyTeam) {
 								TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyTeam);
 								if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
@@ -172,16 +173,16 @@ public class TheTowersActive {
 
 	private void close() {
 		this.sidebar.end();
-		this.participantMap.keys().forEach(team -> this.gameSpace.getWorld().getScoreboard().removeTeam(team.getScoreboardTeam()));
+		this.teamList.forEach(team -> this.gameSpace.getWorld().getScoreboard().removeTeam(team.getScoreboardTeam()));
 	}
 
 	private void checkWin() {
 		ServerWorld world = this.gameSpace.getWorld();
 
-		List<TheTowersTeam> aliveTeams = participantMap.keys().stream().filter(team -> team.health > 0).collect(Collectors.toList());
+		List<TheTowersTeam> aliveTeams = teamList.stream().filter(team -> team.health > 0).collect(Collectors.toList());
 		aliveTeams.forEach(team -> {
 			if(team.health <= 0) {
-				this.participantMap.get(team).forEach(participant -> {
+				team.getParticipants().forEach(participant -> {
 					ServerPlayerEntity player = participant.getPlayer();
 					if(player != null) {
 						player.setGameMode(GameMode.SPECTATOR);
@@ -209,13 +210,13 @@ public class TheTowersActive {
 		// Close game after 30 seconds.
 		if(this.hasEnded) {
 			this.gameCloseTick = world.getTime() + 600;
-			participantMap.values().forEach(participant -> {
+			this.teamList.forEach(team -> team.getParticipants().forEach(participant -> {
 				ServerPlayerEntity player = participant.getPlayer();
 				if(player != null) {
 					player.setGameMode(GameMode.SPECTATOR);
 					this.resetPlayer(player);
 				}
-			});
+			}));
 		}
 	}
 
@@ -267,8 +268,8 @@ public class TheTowersActive {
 		}
 	}
 
-	public Multimap<TheTowersTeam, TheTowersParticipant> getParticipantMap() {
-		return participantMap;
+	public List<TheTowersTeam> getTeamList() {
+		return teamList;
 	}
 
 	public void resetPlayerInventory(ServerPlayerEntity player) {
@@ -289,16 +290,18 @@ public class TheTowersActive {
 
 	@Nullable
 	public TheTowersParticipant getParticipant(ServerPlayerEntity player) {
-		for(TheTowersParticipant participant : this.participantMap.values()) {
-			if(participant.getPlayer() == player) return participant;
+		for(TheTowersTeam team : this.teamList) {
+			for(TheTowersParticipant participant : team.getParticipants()) {
+				if(participant.getPlayer() == player) return participant;
+			}
 		}
 		return null;
 	}
 
 	@Nullable
 	public TheTowersTeam getTeam(TheTowersParticipant participant) {
-		for(TheTowersTeam theTowersTeam : this.participantMap.keys()) {
-			if(this.participantMap.get(theTowersTeam).contains(participant)) return theTowersTeam;
+		for(TheTowersTeam theTowersTeam : this.teamList) {
+			if(theTowersTeam.getParticipants().contains(participant)) return theTowersTeam;
 		}
 		return null;
 	}

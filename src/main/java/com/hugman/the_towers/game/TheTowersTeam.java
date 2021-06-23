@@ -5,19 +5,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Formatting;
 import org.apache.commons.lang3.RandomStringUtils;
 import xyz.nucleoid.plasmid.game.player.GameTeam;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
-import xyz.nucleoid.plasmid.util.BlockBounds;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TheTowersTeam {
 	private final Team scoreboardTeam;
 	private final GameTeam gameTeam;
+	private final List<TheTowersParticipant> participants = new ArrayList<>();
 	private final Text name;
 	public int health;
 
@@ -65,6 +66,14 @@ public class TheTowersTeam {
 
 	public ItemStack dye(ItemStack stack) {
 		return this.gameTeam.dye(stack);
+	}
+
+	public boolean addParticipant(TheTowersParticipant p) {
+		return this.participants.add(p);
+	}
+
+	public List<TheTowersParticipant> getParticipants() {
+		return participants;
 	}
 
 	private static Team getOrCreateScoreboardTeam(String key, ServerScoreboard scoreboard) {

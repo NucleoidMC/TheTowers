@@ -43,7 +43,9 @@ import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -108,7 +110,7 @@ public class TheTowersWaiting {
 	private StartResult requestStart() {
 		ServerScoreboard scoreboard = gameSpace.getServer().getScoreboard();
 
-		Multimap<TheTowersTeam, TheTowersParticipant> participantMap = HashMultimap.create();
+		List<TheTowersTeam> teamList = new ArrayList<>();
 		Map<GameTeam, TheTowersTeam> gameTeamsToEntries = new HashMap<>(this.config.getTeams().size());
 
 		teamSelection.allocate((gameTeam, player) -> {
@@ -117,12 +119,13 @@ public class TheTowersWaiting {
 			if (team == null) {
 				team = new TheTowersTeam(scoreboard, gameTeam, this.config.getTeamHealth());
 				gameTeamsToEntries.put(gameTeam, team);
+				teamList.add(team);
 			}
 			scoreboard.addPlayerToTeam(player.getEntityName(), team.getScoreboardTeam());
-			participantMap.put(team, new TheTowersParticipant(PlayerRef.of(player), gameSpace));
+			team.addParticipant(new TheTowersParticipant(PlayerRef.of(player), gameSpace));
 		});
 
-		TheTowersActive.open(this.gameSpace, this.map, this.config, participantMap);
+		TheTowersActive.open(this.gameSpace, this.map, this.config, teamList);
 		return StartResult.OK;
 	}
 
