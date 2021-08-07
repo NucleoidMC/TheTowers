@@ -1,6 +1,8 @@
 package com.hugman.the_towers.game.map;
 
 import com.hugman.the_towers.config.TheTowersConfig;
+import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import xyz.nucleoid.map_templates.BlockBounds;
@@ -16,17 +18,7 @@ public record TheTowersMapGenerator(TheTowersConfig config) {
 	public TheTowersMap build(MinecraftServer server) throws GameOpenException {
 		try {
 			MapTemplate template = MapTemplateSerializer.loadFromResource(server, this.config.getMap());
-			MapTemplateMetadata metadata = template.getMetadata();
-			BlockBounds center = metadata.getFirstRegionBounds("center");
-			TheTowersMap map = new TheTowersMap(template, this.config, center);
-
-			for(GameTeam team : this.config.getTeams()) {
-				TheTowersTeamRegion region = TheTowersTeamRegion.fromTemplate(team, metadata);
-				map.addTeamRegions(team, region);
-			}
-			metadata.getRegionBounds("protected").forEach(map::addProtectedBounds);
-
-			return map;
+			return TheTowersMap.fromTemplate(template, this.config);
 		}
 		catch(IOException e) {
 			throw new GameOpenException(new LiteralText("Failed to load map template"), e);

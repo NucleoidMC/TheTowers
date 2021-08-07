@@ -109,11 +109,10 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-		return offer.accept(this.world, this.map.getCenter().add(0.5, 0.5, 0.5))
-				.and(() -> {
-					ServerPlayerEntity player = offer.player();
-					player.changeGameMode(GameMode.ADVENTURE);
-				});
+		return offer.accept(this.world, this.map.getCenter()).and(() -> {
+			ServerPlayerEntity player = offer.player();
+			player.changeGameMode(GameMode.ADVENTURE);
+		});
 	}
 
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {

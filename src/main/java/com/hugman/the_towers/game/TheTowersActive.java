@@ -49,8 +49,8 @@ import xyz.nucleoid.stimuli.event.item.ItemThrowEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public class TheTowersActive {
-	public final GameSpace gameSpace;
-	public final ServerWorld world;
+	private final GameSpace gameSpace;
+	private final ServerWorld world;
 	private final TheTowersConfig config;
 	private final TheTowersMap gameMap;
 
@@ -64,7 +64,7 @@ public class TheTowersActive {
 	private boolean hasEnded = false;
 	private long gameCloseTick = -1L;
 
-	private TheTowersActive(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, GlobalWidgets widgets, Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, TeamManager teamManager) {
+	private TheTowersActive(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, TheTowersSidebar sidebar, Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, TeamManager teamManager) {
 		this.gameSpace = gameSpace;
 		this.world = world;
 		this.config = config;
@@ -74,14 +74,15 @@ public class TheTowersActive {
 		this.teamMap = teamMap;
 		this.teamManager = teamManager;
 
-		this.sidebar = TheTowersSidebar.create(widgets, gameSpace);
+		this.sidebar = sidebar;
 	}
 
 	public static void enable(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, TeamManager teamManager) {
 		gameSpace.setActivity(activity -> {
 			GlobalWidgets widgets = GlobalWidgets.addTo(activity);
+			TheTowersSidebar sidebar = TheTowersSidebar.create(widgets, gameSpace);
 			teamManager.applyTo(activity);
-			TheTowersActive active = new TheTowersActive(gameSpace, world, map, config, widgets, participantMap, teamMap, teamManager);
+			TheTowersActive active = new TheTowersActive(gameSpace, world, map, config, sidebar, participantMap, teamMap, teamManager);
 
 			activity.allow(GameRuleType.CRAFTING);
 			activity.deny(GameRuleType.PORTALS);

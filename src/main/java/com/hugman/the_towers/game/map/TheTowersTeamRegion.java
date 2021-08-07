@@ -1,5 +1,8 @@
 package com.hugman.the_towers.game.map;
 
+import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
@@ -7,25 +10,9 @@ import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.game.GameOpenException;
 import xyz.nucleoid.plasmid.game.common.team.GameTeam;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class TheTowersTeamRegion {
-	private final BlockBounds spawn;
-	private final BlockBounds pool;
-	private final List<BlockBounds> chests;
-	private final float spawnYaw;
-	private final float spawnPitch;
-
-	private TheTowersTeamRegion(BlockBounds spawn, BlockBounds pool, List<BlockBounds> chests, float spawnYaw, float spawnPitch) {
-		this.spawn = spawn;
-		this.pool = pool;
-		this.chests = chests;
-		this.spawnYaw = spawnYaw;
-		this.spawnPitch = spawnPitch;
-	}
-
+public record TheTowersTeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domain, float spawnYaw, float spawnPitch) {
 	public static TheTowersTeamRegion fromTemplate(GameTeam team, MapTemplateMetadata metadata) {
 		try {
 			String teamKey = team.key();
@@ -38,9 +25,10 @@ public class TheTowersTeamRegion {
 			TemplateRegion poolRegion = metadata.getFirstRegion(teamKey + "_pool");
 			BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();
 
-			List<BlockBounds> chests = metadata.getRegionBounds(teamKey + "_chest").collect(Collectors.toList());
+			LongSet domain = new LongArraySet();
+			metadata.getRegionBounds(teamKey + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domain.add(pos.asLong())));
 
-			return new TheTowersTeamRegion(spawn, pool, chests, spawnYaw, spawnPitch);
+			return new TheTowersTeamRegion(spawn, pool, domain, spawnYaw, spawnPitch);
 		}
 		catch(NullPointerException e) {
 			throw new GameOpenException(new LiteralText("Failed to load map template" + team.key()), e);
@@ -55,8 +43,8 @@ public class TheTowersTeamRegion {
 		return spawn;
 	}
 
-	public List<BlockBounds> getChests() {
-		return chests;
+	public LongSet getDomain() {
+		return domain;
 	}
 
 	public float getSpawnYaw() {

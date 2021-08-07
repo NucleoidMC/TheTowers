@@ -21,11 +21,12 @@ public record TheTowersSidebar(SidebarWidget sidebarWidget) {
 		sidebarWidget.set(content -> {
 			content.add(new LiteralText(""));
 			teamMap.forEach((gameTeam, team) -> {
-				MutableText text = (gameTeam.display().shallowCopy().formatted(Formatting.BOLD))
-								.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
-								.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
-								.append(new LiteralText("/").formatted(Formatting.GRAY))
-								.append(new LiteralText(String.valueOf(maxHealth)).formatted(Formatting.WHITE));
+				MutableText text = new LiteralText("")
+						.append(gameTeam.display().shallowCopy().formatted(Formatting.BOLD))
+						.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
+						.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
+						.append(new LiteralText("/").formatted(Formatting.GRAY))
+						.append(new LiteralText(String.valueOf(maxHealth)).formatted(Formatting.WHITE));
 				if(team.health <= 0) text = text.formatted(Formatting.GRAY, Formatting.STRIKETHROUGH);
 				content.add(text);
 			});
