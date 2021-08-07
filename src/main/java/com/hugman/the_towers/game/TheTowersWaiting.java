@@ -79,7 +79,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
 		};
 
-		Vec3d pos = this.map.getCenter().add(0.0D, 2.3D, 0.0D);
+		Vec3d pos = this.map.center().add(0.0D, 2.3D, 0.0D);
 		this.world.getChunk(new BlockPos(pos));
 		WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
 		hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
@@ -109,7 +109,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-		return offer.accept(this.world, this.map.getCenter()).and(() -> {
+		return offer.accept(this.world, this.map.center()).and(() -> {
 			ServerPlayerEntity player = offer.player();
 			player.changeGameMode(GameMode.ADVENTURE);
 		});
@@ -122,7 +122,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private void tpPlayer(ServerPlayerEntity player) {
-		BlockPos pos = new BlockPos(this.map.getCenter());
+		BlockPos pos = new BlockPos(this.map.center());
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 		this.world.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getId());
 		player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);

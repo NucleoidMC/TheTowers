@@ -27,7 +27,9 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameMode;
@@ -45,8 +47,11 @@ import xyz.nucleoid.plasmid.game.rule.GameRuleType;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.stimuli.event.block.BlockBreakEvent;
 import xyz.nucleoid.stimuli.event.block.BlockPlaceEvent;
+import xyz.nucleoid.stimuli.event.block.BlockUseEvent;
 import xyz.nucleoid.stimuli.event.item.ItemThrowEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
+
+import java.util.Map;
 
 public class TheTowersActive {
 	private final GameSpace gameSpace;
@@ -99,9 +104,10 @@ public class TheTowersActive {
 			activity.listen(GamePlayerEvents.OFFER, active::offerPlayer);
 
 			activity.listen(PlayerDeathEvent.EVENT, active::killPlayer);
-			activity.listen(BlockBreakEvent.EVENT, active::breakBlock);
-			activity.listen(BlockPlaceEvent.BEFORE, active::placeBlock);
 			activity.listen(ItemThrowEvent.EVENT, active::dropItem);
+			activity.listen(BlockPlaceEvent.BEFORE, active::placeBlock);
+			activity.listen(BlockUseEvent.EVENT, active::useBlock);
+			activity.listen(BlockBreakEvent.EVENT, active::breakBlock);
 		});
 	}
 
@@ -117,7 +123,7 @@ public class TheTowersActive {
 					this.resetPlayerInventory(player);
 				}
 			});
-			WorldHologram hologram = Holograms.create(this.world, gameMap.getTeamRegion(gameTeam).getPool().centerTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", gameTeam.display()).formatted(gameTeam.formatting()));
+			WorldHologram hologram = Holograms.create(this.world, gameMap.teamRegions().get(gameTeam).pool().centerTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", gameTeam.display()).formatted(gameTeam.formatting()));
 			hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
 			hologram.show();
 		});
@@ -133,7 +139,7 @@ public class TheTowersActive {
 		if(!hasEnded) {
 			this.teamMap.keySet().forEach(gameTeam -> {
 				TheTowersTeam team = this.teamMap.get(gameTeam);
-				BlockBounds pool = this.gameMap.getTeamRegion(gameTeam).getPool();
+				BlockBounds pool = this.gameMap.teamRegions().get(gameTeam).pool();
 				if(worldTime % 60 == 0) {
 					pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
 				}
@@ -155,8 +161,8 @@ public class TheTowersActive {
 						this.teamMap.keySet().forEach(enemyGameTeam -> {
 							TheTowersTeam enemyTeam = this.teamMap.get(enemyGameTeam);
 							if(team != enemyTeam) {
-								TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyGameTeam);
-								if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+								TheTowersTeamRegion enemyRegion = this.gameMap.teamRegions().get(enemyGameTeam);
+								if(enemyRegion.pool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
 									this.spawnPlayerAtTheirSpawn(player);
 									enemyTeam.health--;
 									if(this.config.canSteal()) {
@@ -231,7 +237,7 @@ public class TheTowersActive {
 
 		if(theTowersTeam != null) {
 			if(theTowersTeam.health > 0) {
-				return offer.accept(this.world, this.gameMap.getTeamRegion(gameTeam).getSpawn().center()).and(() -> {
+				return offer.accept(this.world, this.gameMap.teamRegions().get(gameTeam).spawn().center()).and(() -> {
 					player.changeGameMode(GameMode.SURVIVAL);
 					this.resetPlayer(player);
 					this.resetPlayerInventory(player);
@@ -239,7 +245,7 @@ public class TheTowersActive {
 				});
 			}
 		}
-		return offer.accept(this.world, this.gameMap.getTeamRegion(gameTeam).getSpawn().center()).and(() -> {
+		return offer.accept(this.world, this.gameMap.teamRegions().get(gameTeam).spawn().center()).and(() -> {
 			player.changeGameMode(GameMode.SPECTATOR);
 			this.resetPlayer(player);
 			this.spawnPlayerAtCenter(player);
@@ -276,13 +282,13 @@ public class TheTowersActive {
 	}
 
 	public void spawnPlayerAtCenter(ServerPlayerEntity player) {
-		this.spawnPlayerAt(player, new BlockPos(this.gameMap.getCenter()), 0.0F, 0.0F);
+		this.spawnPlayerAt(player, new BlockPos(this.gameMap.center()), 0.0F, 0.0F);
 	}
 
 	public void spawnPlayerAtTheirSpawn(ServerPlayerEntity player) {
-		TheTowersTeamRegion region = this.gameMap.getTeamRegion(this.teamManager.teamFor(player));
-		BlockPos spawnPosition = new BlockPos(region.getSpawn().center());
-		this.spawnPlayerAt(player, spawnPosition, region.getSpawnYaw(), region.getSpawnPitch());
+		TheTowersTeamRegion region = this.gameMap.teamRegions().get(this.teamManager.teamFor(player));
+		BlockPos spawnPosition = new BlockPos(region.spawn().center());
+		this.spawnPlayerAt(player, spawnPosition, region.spawnYaw(), region.spawnPitch());
 	}
 
 	public void spawnPlayerAt(ServerPlayerEntity player, BlockPos pos, float yaw, float pitch) {
@@ -293,6 +299,17 @@ public class TheTowersActive {
 	}
 
 	// GENERAL LISTENERS
+	private ActionResult dropItem(PlayerEntity player, int i, ItemStack stack) {
+		if(canStackBeDropped(stack)) {
+			return ActionResult.SUCCESS;
+		}
+		else {
+			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_drop_armor"));
+			player.sendMessage(msg, false);
+			return ActionResult.FAIL;
+		}
+	}
+
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		TheTowersParticipant participant = this.participantMap.get(player);
 		if(participant != null) {
@@ -315,36 +332,64 @@ public class TheTowersActive {
 	}
 
 	private ActionResult placeBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
-		for(BlockBounds bounds : this.gameMap.getProtectedBounds()) {
+		for(BlockBounds bounds : this.gameMap.protectedBounds()) {
 			if(bounds.contains(pos)) {
 				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_place"));
 				playerEntity.sendMessage(msg, false);
 				return ActionResult.FAIL;
 			}
 		}
+		for(Map.Entry<GameTeam, TheTowersTeam> entry : this.teamMap.entrySet()) {
+			if(entry.getKey() != teamManager.teamFor(playerEntity)) {
+				if(this.gameMap.teamRegions().get(entry.getKey()).domains().contains(pos.asLong())) {
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_place"));
+					playerEntity.sendMessage(msg, false);
+					return ActionResult.FAIL;
+				}
+			}
+		}
+		return ActionResult.SUCCESS;
+	}
+
+	private ActionResult useBlock(ServerPlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult) {
+		BlockPos pos = blockHitResult.getBlockPos();
+		for(BlockBounds bounds : this.gameMap.protectedBounds()) {
+			if(bounds.contains(pos)) {
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_use"));
+				playerEntity.sendMessage(msg, false);
+				return ActionResult.FAIL;
+			}
+		}
+		for(Map.Entry<GameTeam, TheTowersTeam> entry : this.teamMap.entrySet()) {
+			if(entry.getKey() != teamManager.teamFor(playerEntity)) {
+				if(this.gameMap.teamRegions().get(entry.getKey()).domains().contains(pos.asLong())) {
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_use"));
+					playerEntity.sendMessage(msg, false);
+					return ActionResult.FAIL;
+				}
+			}
+		}
 		return ActionResult.SUCCESS;
 	}
 
 	private ActionResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
-		for(BlockBounds bounds : this.gameMap.getProtectedBounds()) {
+		for(BlockBounds bounds : this.gameMap.protectedBounds()) {
 			if(bounds.contains(pos)) {
 				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_break"));
 				playerEntity.sendMessage(msg, false);
 				return ActionResult.FAIL;
 			}
 		}
+		for(Map.Entry<GameTeam, TheTowersTeam> entry : this.teamMap.entrySet()) {
+			if(entry.getKey() != teamManager.teamFor(playerEntity)) {
+				if(this.gameMap.teamRegions().get(entry.getKey()).domains().contains(pos.asLong())) {
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_break"));
+					playerEntity.sendMessage(msg, false);
+					return ActionResult.FAIL;
+				}
+			}
+		}
 		return ActionResult.SUCCESS;
-	}
-
-	private ActionResult dropItem(PlayerEntity player, int i, ItemStack stack) {
-		if(canStackBeDropped(stack)) {
-			return ActionResult.SUCCESS;
-		}
-		else {
-			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_drop_armor"));
-			player.sendMessage(msg, false);
-			return ActionResult.FAIL;
-		}
 	}
 
 	// UTILITY

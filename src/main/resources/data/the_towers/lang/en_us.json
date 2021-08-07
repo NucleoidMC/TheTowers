@@ -1,9 +1,10 @@
 {
 	"game.the_towers.classic": "The Towers: Classic",
 	"game.the_towers.the_towers": "The Towers",
-	"text.the_towers.cannot_break": "You cannot break blocks here!",
+	"text.the_towers.cannot_break": "You cannot break this block!",
 	"text.the_towers.cannot_drop_armor": "You cannot drop your team's armor!",
-	"text.the_towers.cannot_place": "You cannot place blocks here!",
+	"text.the_towers.cannot_place": "You cannot place a block here!",
+	"text.the_towers.cannot_use": "You cannot use this block!",
 	"text.the_towers.guide.craft_stuff": "Craft your stuff using the materials in the chests!",
 	"text.the_towers.guide.jumping_into_pool": "Jumping into an team's pool will remove a health point from that team.",
 	"text.the_towers.guide.protect_your_pool": "Be sure to protect your pool carefully!",

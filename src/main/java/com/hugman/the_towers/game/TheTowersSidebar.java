@@ -34,8 +34,4 @@ public record TheTowersSidebar(SidebarWidget sidebarWidget) {
 			content.add(new TranslatableText("text.the_towers.time", TickUtil.format(ticks).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
 		});
 	}
-
-	public void end() {
-		sidebarWidget.close();
-	}
 }
