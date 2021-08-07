@@ -348,7 +348,7 @@ public class TheTowersActive {
 				}
 			}
 		}
-		return ActionResult.SUCCESS;
+		return ActionResult.PASS;
 	}
 
 	private ActionResult useBlock(ServerPlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult) {
@@ -369,7 +369,7 @@ public class TheTowersActive {
 				}
 			}
 		}
-		return ActionResult.SUCCESS;
+		return ActionResult.PASS;
 	}
 
 	private ActionResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
@@ -389,7 +389,7 @@ public class TheTowersActive {
 				}
 			}
 		}
-		return ActionResult.SUCCESS;
+		return ActionResult.PASS;
 	}
 
 	// UTILITY
