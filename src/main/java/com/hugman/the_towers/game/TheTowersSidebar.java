@@ -21,7 +21,7 @@ public record TheTowersSidebar(SidebarWidget sidebarWidget) {
 		sidebarWidget.set(content -> {
 			content.add(new LiteralText(""));
 			teamMap.forEach((gameTeam, team) -> {
-				MutableText text = gameTeam.display().shallowCopy().formatted(Formatting.BOLD)
+				MutableText text = (gameTeam.display().shallowCopy().formatted(Formatting.BOLD))
 								.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
 								.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
 								.append(new LiteralText("/").formatted(Formatting.GRAY))

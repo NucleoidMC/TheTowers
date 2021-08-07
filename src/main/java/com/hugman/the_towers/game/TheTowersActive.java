@@ -80,6 +80,7 @@ public class TheTowersActive {
 	public static void enable(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, TeamManager teamManager) {
 		gameSpace.setActivity(activity -> {
 			GlobalWidgets widgets = GlobalWidgets.addTo(activity);
+			teamManager.applyTo(activity);
 			TheTowersActive active = new TheTowersActive(gameSpace, world, map, config, widgets, participantMap, teamMap, teamManager);
 
 			activity.allow(GameRuleType.CRAFTING);
@@ -117,6 +118,7 @@ public class TheTowersActive {
 			});
 			WorldHologram hologram = Holograms.create(this.world, gameMap.getTeamRegion(gameTeam).getPool().centerTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", gameTeam.display()).formatted(gameTeam.formatting()));
 			hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
+			hologram.show();
 		});
 	}
 
@@ -150,7 +152,7 @@ public class TheTowersActive {
 						}
 
 						this.teamMap.keySet().forEach(enemyGameTeam -> {
-							TheTowersTeam enemyTeam = this.teamMap.get(gameTeam);
+							TheTowersTeam enemyTeam = this.teamMap.get(enemyGameTeam);
 							if(team != enemyTeam) {
 								TheTowersTeamRegion enemyRegion = this.gameMap.getTeamRegion(enemyGameTeam);
 								if(enemyRegion.getPool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {

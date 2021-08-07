@@ -83,6 +83,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 		this.world.getChunk(new BlockPos(pos));
 		WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
 		hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
+		hologram.show();
 	}
 
 	private GameResult requestStart() {
@@ -91,20 +92,16 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 		Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
 		Object2ObjectMap<GameTeam, TheTowersTeam> teamMap = new Object2ObjectOpenHashMap<>();
 
-		for(GameTeam team : teams) {
-			this.teamManager.setFriendlyFire(team, false);
-			this.teamManager.setCollisionRule(team, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
+		for(GameTeam gameTeam : teams) {
+			this.teamManager.addTeam(gameTeam);
+			this.teamManager.setFriendlyFire(gameTeam, false);
+			this.teamManager.setCollisionRule(gameTeam, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
+			teamMap.put(gameTeam, new TheTowersTeam(this.config.getTeamHealth()));
 		}
 
 		teamSelection.allocate((gameTeam, player) -> {
-			teamManager.addPlayerTo(player, gameTeam);
 			participantMap.put(player, new TheTowersParticipant());
-
-			// Get or create team
-			TheTowersTeam team = teamMap.get(gameTeam);
-			if(team == null) {
-				teamMap.put(gameTeam, new TheTowersTeam(this.config.getTeamHealth()));
-			}
+			teamManager.addPlayerTo(player, gameTeam);
 		});
 
 		TheTowersActive.enable(this.gameSpace, this.world, this.map, this.config, participantMap, teamMap, this.teamManager);
