@@ -12,11 +12,11 @@ import java.io.IOException;
 public record TheTowersMapGenerator(TheTowersConfig config) {
 	public TheTowersMap build(MinecraftServer server) throws GameOpenException {
 		try {
-			MapTemplate template = MapTemplateSerializer.loadFromResource(server, this.config.getMap());
+			MapTemplate template = MapTemplateSerializer.loadFromResource(server, this.config.mapTemplateId());
 			return TheTowersMap.fromTemplate(template, this.config);
 		}
 		catch(IOException e) {
-			throw new GameOpenException(new LiteralText("Failed to load map template"), e);
+			throw new GameOpenException(new LiteralText("Failed to load mapTemplateId template"), e);
 		}
 	}
 }

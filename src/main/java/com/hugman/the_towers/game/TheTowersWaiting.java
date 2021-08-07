@@ -51,10 +51,10 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 				.setGenerator(map.asGenerator(context.server()));
 
 		return context.openWithWorld(worldConfig, (activity, world) -> {
-			GameWaitingLobby.addTo(activity, config.getPlayerConfig());
+			GameWaitingLobby.addTo(activity, config.playerConfig());
 			TeamManager teamManager = TeamManager.addTo(activity);
 
-			TeamSelectionLobby teamSelection = TeamSelectionLobby.applyTo(activity, config.getTeams());
+			TeamSelectionLobby teamSelection = TeamSelectionLobby.applyTo(activity, config.teamConfig());
 			TheTowersWaiting waiting = new TheTowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection, teamManager);
 
 			activity.setRule(GameRuleType.INTERACTION, ActionResult.FAIL);
@@ -87,7 +87,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private GameResult requestStart() {
-		List<GameTeam> teams = this.config().getTeams();
+		List<GameTeam> teams = this.config().teamConfig();
 
 		Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
 		Object2ObjectMap<GameTeam, TheTowersTeam> teamMap = new Object2ObjectOpenHashMap<>();
@@ -96,7 +96,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 			this.teamManager.addTeam(gameTeam);
 			this.teamManager.setFriendlyFire(gameTeam, false);
 			this.teamManager.setCollisionRule(gameTeam, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
-			teamMap.put(gameTeam, new TheTowersTeam(this.config.getTeamHealth()));
+			teamMap.put(gameTeam, new TheTowersTeam(this.config.maxHealth()));
 		}
 
 		teamSelection.allocate((gameTeam, player) -> {

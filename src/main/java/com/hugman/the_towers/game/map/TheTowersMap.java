@@ -2,6 +2,11 @@ package com.hugman.the_towers.game.map;
 
 import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TheTowersConfig;
+import com.hugman.the_towers.game.map.parts.Generator;
+import com.hugman.the_towers.game.map.parts.GeneratorType;
+import com.hugman.the_towers.game.map.parts.TeamRegion;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -11,12 +16,16 @@ import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.plasmid.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.game.world.generator.TemplateChunkGenerator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record TheTowersMap(MapTemplate template, TheTowersConfig config, Vec3d center, List<BlockBounds> protectedBounds, List<Vec3d> ironGenerators, Map<GameTeam, TheTowersTeamRegion> teamRegions) {
+public record TheTowersMap(MapTemplate template, TheTowersConfig config, Vec3d center, List<BlockBounds> protectedBounds, List<Generator> generators, Map<GameTeam, TeamRegion> teamRegions) {
+	/**
+	 * Creates the mapTemplateId from a mapTemplateId template by reading its metadata.
+	 */
 	public static TheTowersMap fromTemplate(MapTemplate template, TheTowersConfig config) {
 		MapTemplateMetadata metadata = template.getMetadata();
 		Vec3d center = new Vec3d(0, 50, 0);
@@ -29,15 +38,20 @@ public record TheTowersMap(MapTemplate template, TheTowersConfig config, Vec3d c
 		}
 
 		List<BlockBounds> protectedBounds = metadata.getRegionBounds("protected").collect(Collectors.toList());
-		List<Vec3d> ironGenerators = metadata.getRegionBounds("iron_generators").map(BlockBounds::center).collect(Collectors.toList());
+		List<Generator> generators = new ArrayList<>();
+		Map<GameTeam, TeamRegion> teamRegions = new HashMap<>();
 
-		Map<GameTeam, TheTowersTeamRegion> teamRegions = new HashMap<>();
-		for(GameTeam team : config.getTeams()) {
-			TheTowersTeamRegion region = TheTowersTeamRegion.fromTemplate(team, metadata);
+		GeneratorType ironGeneratorType = new GeneratorType(new ItemStack(Items.IRON_INGOT), 30 * 20);
+		for(Vec3d vec3d : metadata.getRegionBounds("iron_generator").map(BlockBounds::center).collect(Collectors.toList())) {
+			generators.add(new Generator(ironGeneratorType, vec3d));
+		}
+
+		for(GameTeam team : config.teamConfig()) {
+			TeamRegion region = TeamRegion.fromTemplate(team, metadata);
 			teamRegions.put(team, region);
 		}
 
-		return new TheTowersMap(template, config, center, protectedBounds, ironGenerators, teamRegions);
+		return new TheTowersMap(template, config, center, protectedBounds, generators, teamRegions);
 	}
 
 	public ChunkGenerator asGenerator(MinecraftServer server) {

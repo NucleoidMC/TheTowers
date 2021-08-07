@@ -23,6 +23,6 @@
 			}
 		}
 	],
-	"team_health": 10,
-	"stealing": false
+	"max_health": 10,
+	"health_stealth": false
 }

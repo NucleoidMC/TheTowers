@@ -2,7 +2,7 @@ package com.hugman.the_towers.game;
 
 import com.hugman.the_towers.config.TheTowersConfig;
 import com.hugman.the_towers.game.map.TheTowersMap;
-import com.hugman.the_towers.game.map.TheTowersTeamRegion;
+import com.hugman.the_towers.game.map.parts.TeamRegion;
 import com.hugman.the_towers.util.FormattingUtil;
 import eu.pb4.holograms.api.Holograms;
 import eu.pb4.holograms.api.holograms.AbstractHologram;
@@ -134,9 +134,10 @@ public class TheTowersActive {
 		long gameTime = world.getTime() - gameStartTick;
 
 		if(gameTime % 20 == 0) {
-			this.sidebar.update(gameTime, this.teamMap, this.config.getTeamHealth());
+			this.sidebar.update(gameTime, this.teamMap, this.config.maxHealth());
 		}
 		if(!hasEnded) {
+			this.gameMap.generators().forEach(generator -> generator.tick(world, gameTime));
 			this.teamMap.keySet().forEach(gameTeam -> {
 				TheTowersTeam team = this.teamMap.get(gameTeam);
 				BlockBounds pool = this.gameMap.teamRegions().get(gameTeam).pool();
@@ -158,14 +159,16 @@ public class TheTowersActive {
 							}
 						}
 
+						// Check for players in pools.
 						this.teamMap.keySet().forEach(enemyGameTeam -> {
 							TheTowersTeam enemyTeam = this.teamMap.get(enemyGameTeam);
 							if(team != enemyTeam) {
-								TheTowersTeamRegion enemyRegion = this.gameMap.teamRegions().get(enemyGameTeam);
+								TeamRegion enemyRegion = this.gameMap.teamRegions().get(enemyGameTeam);
 								if(enemyRegion.pool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+									// The player is in an enemy's pool. They make them lose a point and steal them if the configuration allows it.
 									this.spawnPlayerAtTheirSpawn(player);
 									enemyTeam.health--;
-									if(this.config.canSteal()) {
+									if(this.config.healthStealth()) {
 										Text msg = FormattingUtil.format(FormattingUtil.HEALTH_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_stole", player.getName(), enemyGameTeam.display()));
 										this.gameSpace.getPlayers().sendMessage(msg);
 										team.health++;
@@ -192,6 +195,7 @@ public class TheTowersActive {
 
 	private void checkWin() {
 		long aliveCount = this.teamMap.values().stream().filter(team -> team.health > 0).count();
+		// No teamConfig are alive. Weird!
 		if(aliveCount == 0) {
 			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.nobody_won"));
 			this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
@@ -199,6 +203,7 @@ public class TheTowersActive {
 		}
 		this.teamMap.forEach((gameTeam, team) -> {
 			if(team.health <= 0) {
+				// The selected team has not enough health to be alive. They are eliminated.
 				this.teamManager.playersIn(gameTeam).forEach(player -> {
 					if(player != null) {
 						player.changeGameMode(GameMode.SPECTATOR);
@@ -209,13 +214,14 @@ public class TheTowersActive {
 				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
 			}
-			if(team.health > 0) {
-				if(aliveCount == 1) {
-					Text msg = FormattingUtil.format(FormattingUtil.STAR_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", gameTeam.display()));
-					this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
-					this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
-					this.hasEnded = true;
-				}
+		});
+		this.teamMap.forEach((gameTeam, team) -> {
+			if(aliveCount == 1 && team.health > 0) {
+				// The selected team is the only team left that is alive. They win.
+				Text msg = FormattingUtil.format(FormattingUtil.STAR_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", gameTeam.display()));
+				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
+				this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
+				this.hasEnded = true;
 			}
 		});
 
@@ -287,7 +293,7 @@ public class TheTowersActive {
 	}
 
 	public void spawnPlayerAtTheirSpawn(ServerPlayerEntity player) {
-		TheTowersTeamRegion region = this.gameMap.teamRegions().get(this.teamManager.teamFor(player));
+		TeamRegion region = this.gameMap.teamRegions().get(this.teamManager.teamFor(player));
 		BlockPos spawnPosition = new BlockPos(region.spawn().center());
 		this.spawnPlayerAt(player, spawnPosition, region.spawnYaw(), region.spawnPitch());
 	}
@@ -314,7 +320,7 @@ public class TheTowersActive {
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		TheTowersParticipant participant = this.participantMap.get(player);
 		if(participant != null) {
-			participant.ticksUntilRespawn = this.config.getRespawnCooldown() * 20L;
+			participant.ticksUntilRespawn = this.config.respawnCooldown() * 20L;
 			participant.isRespawning = true;
 			player.changeGameMode(GameMode.SPECTATOR);
 			for(int i = 0; i < player.getInventory().size(); ++i) {

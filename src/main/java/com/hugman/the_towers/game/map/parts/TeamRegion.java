@@ -1,4 +1,4 @@
-package com.hugman.the_towers.game.map;
+package com.hugman.the_towers.game.map.parts;
 
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -11,8 +11,13 @@ import xyz.nucleoid.plasmid.game.common.team.GameTeam;
 
 import java.util.Objects;
 
-public record TheTowersTeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, float spawnYaw, float spawnPitch) {
-	public static TheTowersTeamRegion fromTemplate(GameTeam team, MapTemplateMetadata metadata) {
+public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, float spawnYaw, float spawnPitch) {
+	/**
+	 * Creates a team region by reading the mapTemplateId template's metadata. Can throw a {@link NullPointerException} if the regions are not specified in the mapTemplateId template.
+	 *
+	 * @param team the team which needs its regions to be found
+	 */
+	public static TeamRegion fromTemplate(GameTeam team, MapTemplateMetadata metadata) {
 		try {
 			String teamKey = team.key();
 
@@ -27,10 +32,10 @@ public record TheTowersTeamRegion(BlockBounds spawn, BlockBounds pool, LongSet d
 			LongSet domains = new LongArraySet();
 			metadata.getRegionBounds(teamKey + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
 
-			return new TheTowersTeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
+			return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
 		}
 		catch(NullPointerException e) {
-			throw new GameOpenException(new LiteralText("Failed to load map template" + team.key()), e);
+			throw new GameOpenException(new LiteralText("Failed to load mapTemplateId template" + team.key()), e);
 		}
 	}
 }
