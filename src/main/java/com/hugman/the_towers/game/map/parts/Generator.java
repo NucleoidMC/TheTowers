@@ -10,7 +10,7 @@ import net.minecraft.util.math.Vec3d;
 public record Generator(GeneratorType type, Vec3d pos) {
 	public void tick(ServerWorld world, long gameTime) {
 		if(gameTime % type.interval() == 0) {
-			ItemEntity itemEntity = new ItemEntity(world, pos.getX(), pos.getY(), pos.getZ(), type.stack());
+			ItemEntity itemEntity = new ItemEntity(world, pos.getX(), pos.getY(), pos.getZ(), type.stack().copy());
 			itemEntity.setVelocity(0.0D, 0.2D, 0.0D);
 			world.spawnEntity(itemEntity);
 			world.spawnParticles(ParticleTypes.CLOUD, pos.getX(), pos.getY(), pos.getZ(), 2, 0.0D, 0.0D, 0.0D, 0.0D);
