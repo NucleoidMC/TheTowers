@@ -133,9 +133,6 @@ public class TheTowersActive {
 		long worldTime = world.getTime();
 		long gameTime = world.getTime() - gameStartTick;
 
-		if(gameTime % 20 == 0) {
-			this.sidebar.update(gameTime, this.teamMap, this.config.maxHealth());
-		}
 		if(!hasEnded) {
 			this.gameMap.generators().forEach(generator -> generator.tick(world, gameTime));
 			this.teamMap.keySet().forEach(gameTeam -> {
@@ -185,6 +182,9 @@ public class TheTowersActive {
 					}
 				});
 			});
+			if(gameTime % 20 == 0) {
+				this.sidebar.update(gameTime, this.teamMap, this.config.maxHealth());
+			}
 		}
 
 		// Game has finished
