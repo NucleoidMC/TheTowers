@@ -209,12 +209,13 @@ public class TheTowersActive {
 				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
 			}
-
-			if(aliveCount == 1) {
-				Text msg = FormattingUtil.format(FormattingUtil.STAR_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", gameTeam.display()));
-				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
-				this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
-				this.hasEnded = true;
+			if(team.health > 0) {
+				if(aliveCount == 1) {
+					Text msg = FormattingUtil.format(FormattingUtil.STAR_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", gameTeam.display()));
+					this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
+					this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
+					this.hasEnded = true;
+				}
 			}
 		});
 
@@ -352,6 +353,7 @@ public class TheTowersActive {
 	}
 
 	private ActionResult useBlock(ServerPlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult) {
+		// TODO: can't place blocks when trying to place on the side of a protected block. Must fix.
 		BlockPos pos = blockHitResult.getBlockPos();
 		for(BlockBounds bounds : this.gameMap.protectedBounds()) {
 			if(bounds.contains(pos)) {
