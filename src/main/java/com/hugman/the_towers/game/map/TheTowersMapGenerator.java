@@ -1,26 +1,21 @@
 package com.hugman.the_towers.game.map;
 
 import com.hugman.the_towers.config.TheTowersConfig;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
+import xyz.nucleoid.map_templates.BlockBounds;
+import xyz.nucleoid.map_templates.MapTemplate;
+import xyz.nucleoid.map_templates.MapTemplateMetadata;
+import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.game.GameOpenException;
-import xyz.nucleoid.plasmid.game.player.GameTeam;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
-import xyz.nucleoid.plasmid.map.template.MapTemplateMetadata;
-import xyz.nucleoid.plasmid.map.template.MapTemplateSerializer;
-import xyz.nucleoid.plasmid.util.BlockBounds;
+import xyz.nucleoid.plasmid.game.common.team.GameTeam;
 
 import java.io.IOException;
 
-public class TheTowersMapGenerator {
-	private final TheTowersConfig config;
-
-	public TheTowersMapGenerator(TheTowersConfig config) {
-		this.config = config;
-	}
-
-	public TheTowersMap build() throws GameOpenException {
+public record TheTowersMapGenerator(TheTowersConfig config) {
+	public TheTowersMap build(MinecraftServer server) throws GameOpenException {
 		try {
-			MapTemplate template = MapTemplateSerializer.INSTANCE.loadFromResource(this.config.getMap());
+			MapTemplate template = MapTemplateSerializer.loadFromResource(server, this.config.getMap());
 			MapTemplateMetadata metadata = template.getMetadata();
 			BlockBounds center = metadata.getFirstRegionBounds("center");
 			TheTowersMap map = new TheTowersMap(template, this.config, center);

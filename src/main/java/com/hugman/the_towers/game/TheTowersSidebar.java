@@ -2,37 +2,35 @@ package com.hugman.the_towers.game;
 
 import com.hugman.the_towers.util.FormattingUtil;
 import com.hugman.the_towers.util.TickUtil;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
-import xyz.nucleoid.plasmid.widget.SidebarWidget;
+import xyz.nucleoid.plasmid.game.GameSpace;
+import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.game.common.widget.SidebarWidget;
 
-public class TheTowersSidebar {
-	private final SidebarWidget sidebarWidget;
-	private final TheTowersActive active;
-
-	private TheTowersSidebar(SidebarWidget sidebarWidget, TheTowersActive active) {
-		this.sidebarWidget = sidebarWidget;
-		this.active = active;
+public record TheTowersSidebar(SidebarWidget sidebarWidget) {
+	public static TheTowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
+		return new TheTowersSidebar(widgets.addSidebar(gameSpace.getSourceConfig().getName().copy().formatted(Formatting.BOLD, Formatting.GOLD)));
 	}
 
-	public static TheTowersSidebar create(GlobalWidgets widgets, TheTowersActive active) {
-		return new TheTowersSidebar(widgets.addSidebar(active.gameSpace.getGameConfig().getNameText().copy().formatted(Formatting.BOLD, Formatting.GOLD)), active);
-	}
-
-	public void update() {
+	public void update(long ticks, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, int maxHealth) {
 		sidebarWidget.set(content -> {
-			content.writeLine("");
-			active.getTeamList().forEach(team -> {
-				// TODO: make translated when possible
-				content.writeLine(team.getFormatting().toString() + Formatting.BOLD + (team.health <= 0 ? Formatting.STRIKETHROUGH.toString() : "") + team.getDisplay() +
-						Formatting.GRAY + " " + FormattingUtil.GENERAL_PREFIX + " " +
-						Formatting.WHITE + team.health +
-						Formatting.GRAY + "/" + Formatting.WHITE +
-						active.config.getTeamHealth() +
-						Formatting.WHITE);
+			content.add(new LiteralText(""));
+			teamMap.forEach((gameTeam, team) -> {
+				MutableText text = gameTeam.display().shallowCopy().formatted(Formatting.BOLD)
+								.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
+								.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
+								.append(new LiteralText("/").formatted(Formatting.GRAY))
+								.append(new LiteralText(String.valueOf(maxHealth)).formatted(Formatting.WHITE));
+				if(team.health <= 0) text = text.formatted(Formatting.GRAY, Formatting.STRIKETHROUGH);
+				content.add(text);
 			});
-			content.writeLine("");
-			content.writeLine(Formatting.GRAY + "Time: " + Formatting.WHITE + TickUtil.format(active.getGameTime()).getString());
+			content.add(new LiteralText(""));
+			content.add(new TranslatableText("text.the_towers.time", TickUtil.format(ticks).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
 		});
 	}
 

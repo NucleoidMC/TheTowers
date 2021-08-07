@@ -55,30 +55,30 @@ public final class TickUtil {
 		boolean textBefore = false;
 		if(hours > 0) {
 			if(hours == 1) {
-				text.append(new TranslatableText("text.uhc.time.hour"));
+				text.append(new TranslatableText("text.the_towers.time.hour"));
 			}
 			else {
-				text.append(new TranslatableText("text.uhc.time.hours", hours));
+				text.append(new TranslatableText("text.the_towers.time.hours", hours));
 			}
 			textBefore = true;
 		}
 		if(minutes > 0) {
-			if(textBefore) text.append(new LiteralText(" ")).append(new TranslatableText("text.uhc.and")).append(new LiteralText(" "));
+			if(textBefore) text.append(new LiteralText(" ")).append(new TranslatableText("text.the_towers.and")).append(new LiteralText(" "));
 			if(minutes == 1) {
-				text.append(new TranslatableText("text.uhc.time.minute"));
+				text.append(new TranslatableText("text.the_towers.time.minute"));
 			}
 			else {
-				text.append(new TranslatableText("text.uhc.time.minutes", minutes));
+				text.append(new TranslatableText("text.the_towers.time.minutes", minutes));
 			}
 			textBefore = true;
 		}
 		if(seconds > 0) {
-			if(textBefore) text.append(new LiteralText(" ")).append(new TranslatableText("text.uhc.and")).append(new LiteralText(" "));
+			if(textBefore) text.append(new LiteralText(" ")).append(new TranslatableText("text.the_towers.and")).append(new LiteralText(" "));
 			if(seconds == 1) {
-				text.append(new TranslatableText("text.uhc.time.second"));
+				text.append(new TranslatableText("text.the_towers.time.second"));
 			}
 			else {
-				text.append(new TranslatableText("text.uhc.time.seconds", seconds));
+				text.append(new TranslatableText("text.the_towers.time.seconds", seconds));
 			}
 		}
 

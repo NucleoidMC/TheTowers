@@ -14,5 +14,6 @@
 	"text.the_towers.respawn_in": "Respawning in %s...",
 	"text.the_towers.sidebar.entry": "%s: %s",
 	"text.the_towers.team_eliminated": "The %s team has been eliminated!",
-	"text.the_towers.team_won": "The %s team has won!"
+	"text.the_towers.team_won": "The %s team has won!",
+	"text.the_towers.time": "Time: %s"
 }

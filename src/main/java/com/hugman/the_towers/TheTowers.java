@@ -18,6 +18,6 @@ public class TheTowers implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		GameType.register(TheTowers.id("the_towers"), TheTowersWaiting::open, TheTowersConfig.CODEC);
+		GameType.register(TheTowers.id("the_towers"), TheTowersConfig.CODEC, TheTowersWaiting::open);
 	}
 }
