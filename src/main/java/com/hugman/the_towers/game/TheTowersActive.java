@@ -263,9 +263,8 @@ public class TheTowersActive {
 		ServerPlayerEntity player = offer.player();
 
 		GameTeam gameTeam = this.teamManager.teamFor(player);
-		TheTowersTeam theTowersTeam = teamMap.get(gameTeam);
-
-		if(theTowersTeam != null) {
+		if(gameTeam != null) {
+			TheTowersTeam theTowersTeam = teamMap.get(gameTeam);
 			if(theTowersTeam.health > 0) {
 				return offer.accept(this.world, this.gameMap.teamRegions().get(gameTeam).spawn().center()).and(() -> {
 					player.changeGameMode(GameMode.SURVIVAL);
@@ -275,7 +274,7 @@ public class TheTowersActive {
 				});
 			}
 		}
-		return offer.accept(this.world, this.gameMap.teamRegions().get(gameTeam).spawn().center()).and(() -> {
+		return offer.accept(this.world, this.gameMap.spawn()).and(() -> {
 			player.changeGameMode(GameMode.SPECTATOR);
 			this.resetPlayer(player);
 			this.spawnPlayerAtCenter(player);
