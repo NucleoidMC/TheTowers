@@ -44,8 +44,7 @@ import java.util.List;
 public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, TeamSelectionLobby teamSelection, TeamManager teamManager) {
 	public static GameOpenProcedure open(GameOpenContext<TheTowersConfig> context) {
 		TheTowersConfig config = context.config();
-		TheTowersMapGenerator generator = new TheTowersMapGenerator(config);
-		TheTowersMap map = generator.build(context.server());
+		TheTowersMap map = TheTowersMapGenerator.loadFromConfig(context.server(), config);
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
 				.setGenerator(map.asGenerator(context.server()));
@@ -79,7 +78,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
 		};
 
-		Vec3d pos = this.map.center().add(0.0D, 2.3D, 0.0D);
+		Vec3d pos = this.map.rules().add(0.0D, 2.3D, 0.0D);
 		this.world.getChunk(new BlockPos(pos));
 		WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
 		hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
@@ -109,7 +108,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-		return offer.accept(this.world, this.map.center()).and(() -> {
+		return offer.accept(this.world, this.map.spawn()).and(() -> {
 			ServerPlayerEntity player = offer.player();
 			player.changeGameMode(GameMode.ADVENTURE);
 		});
@@ -122,7 +121,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private void tpPlayer(ServerPlayerEntity player) {
-		BlockPos pos = new BlockPos(this.map.center());
+		BlockPos pos = new BlockPos(this.map.spawn());
 		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 		this.world.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getId());
 		player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);

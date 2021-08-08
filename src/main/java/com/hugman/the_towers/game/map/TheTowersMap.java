@@ -22,19 +22,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record TheTowersMap(MapTemplate template, TheTowersConfig config, Vec3d center, List<BlockBounds> protectedBounds, List<Generator> generators, Map<GameTeam, TeamRegion> teamRegions) {
+public record TheTowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<BlockBounds> protectedBounds, List<Generator> generators, Map<GameTeam, TeamRegion> teamRegions) {
 	/**
-	 * Creates the mapTemplateId from a mapTemplateId template by reading its metadata.
+	 * Creates the map from a map template by reading its metadata.
 	 */
 	public static TheTowersMap fromTemplate(MapTemplate template, TheTowersConfig config) {
 		MapTemplateMetadata metadata = template.getMetadata();
-		Vec3d center = new Vec3d(0, 50, 0);
-		BlockBounds centerBounds = metadata.getFirstRegionBounds("center");
-		if(centerBounds != null) {
-			center = centerBounds.center();
+		Vec3d spawn = new Vec3d(0, 50, 0);
+		BlockBounds spawnBounds = metadata.getFirstRegionBounds("spawn");
+		if(spawnBounds != null) {
+			spawn = spawnBounds.center();
 		}
 		else {
-			TheTowers.LOGGER.warn("Missing map center, set to default [0 50 0]");
+			TheTowers.LOGGER.warn("Missing map spawn, set to default [0 50 0]");
+		}
+		Vec3d rules = spawn;
+		BlockBounds rulesBounds = metadata.getFirstRegionBounds("rules");
+		if(rulesBounds != null) {
+			rules = rulesBounds.center();
+		}
+		else {
+			TheTowers.LOGGER.warn("Missing map rules, set to spawn position");
 		}
 
 		List<BlockBounds> protectedBounds = metadata.getRegionBounds("protected").collect(Collectors.toList());
@@ -51,7 +59,7 @@ public record TheTowersMap(MapTemplate template, TheTowersConfig config, Vec3d c
 			teamRegions.put(team, region);
 		}
 
-		return new TheTowersMap(template, config, center, protectedBounds, generators, teamRegions);
+		return new TheTowersMap(template, spawn, rules, protectedBounds, generators, teamRegions);
 	}
 
 	public ChunkGenerator asGenerator(MinecraftServer server) {

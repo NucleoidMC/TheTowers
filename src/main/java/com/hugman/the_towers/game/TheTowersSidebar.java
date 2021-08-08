@@ -20,11 +20,10 @@ public record TheTowersSidebar(SidebarWidget sidebarWidget) {
 	/**
 	 * Updates the sidebar.
 	 *
-	 * @param time      the game's time in ticks
-	 * @param teamMap   the mapTemplateId of teamConfig
-	 * @param maxHealth the maximum health of teamConfig configured by the config
+	 * @param time    the game's time in ticks
+	 * @param teamMap the map of team
 	 */
-	public void update(long time, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap, int maxHealth) {
+	public void update(long time, Object2ObjectMap<GameTeam, TheTowersTeam> teamMap) {
 		sidebarWidget.set(content -> {
 			content.add(new LiteralText(""));
 			teamMap.forEach((gameTeam, team) -> {
@@ -33,20 +32,17 @@ public record TheTowersSidebar(SidebarWidget sidebarWidget) {
 					text.append(gameTeam.display().shallowCopy().formatted(Formatting.BOLD))
 							.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
 							.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
-							.append(new LiteralText("/").formatted(Formatting.GRAY))
-							.append(new LiteralText(String.valueOf(maxHealth)).formatted(Formatting.WHITE));
+							.append(new LiteralText(FormattingUtil.HEALTH).formatted(Formatting.WHITE));
 				}
 				else {
-					text.append(gameTeam.display().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD, Formatting.STRIKETHROUGH))
-							.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY, Formatting.STRIKETHROUGH))
-							.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.GRAY, Formatting.STRIKETHROUGH))
-							.append(new LiteralText("/").formatted(Formatting.GRAY, Formatting.STRIKETHROUGH))
-							.append(new LiteralText(String.valueOf(maxHealth)).formatted(Formatting.GRAY, Formatting.STRIKETHROUGH));
+					text.append(gameTeam.display().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
+							.append(new LiteralText(" " + FormattingUtil.GENERAL_PREFIX + " ").formatted(Formatting.GRAY))
+							.append(new LiteralText(FormattingUtil.X_PREFIX).formatted(Formatting.WHITE));
 				}
 				content.add(text);
 			});
 			content.add(new LiteralText(""));
-			content.add(new TranslatableText("text.the_towers.time", TickUtil.format(time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
+			content.add(new LiteralText(FormattingUtil.CLOCK_PREFIX + " ").formatted(Formatting.GRAY).append(new TranslatableText("text.the_towers.time", TickUtil.format(time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
 		});
 	}
 }

@@ -9,14 +9,14 @@ import xyz.nucleoid.plasmid.game.GameOpenException;
 
 import java.io.IOException;
 
-public record TheTowersMapGenerator(TheTowersConfig config) {
-	public TheTowersMap build(MinecraftServer server) throws GameOpenException {
+public class TheTowersMapGenerator {
+	public static TheTowersMap loadFromConfig(MinecraftServer server, TheTowersConfig config) throws GameOpenException {
 		try {
-			MapTemplate template = MapTemplateSerializer.loadFromResource(server, this.config.mapTemplateId());
-			return TheTowersMap.fromTemplate(template, this.config);
+			MapTemplate template = MapTemplateSerializer.loadFromResource(server, config.mapTemplateId());
+			return TheTowersMap.fromTemplate(template, config);
 		}
 		catch(IOException e) {
-			throw new GameOpenException(new LiteralText("Failed to load mapTemplateId template"), e);
+			throw new GameOpenException(new LiteralText("Failed to load map template"), e);
 		}
 	}
 }

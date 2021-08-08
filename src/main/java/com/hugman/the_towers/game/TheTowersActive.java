@@ -12,14 +12,20 @@ import net.minecraft.block.BlockState;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.GameStateChangeS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
@@ -31,7 +37,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
@@ -114,6 +120,19 @@ public class TheTowersActive {
 	// GENERAL GAME MANAGEMENT
 	private void enable() {
 		this.gameStartTick = world.getTime();
+
+		Text[] GUIDE_LINES = {
+				new LiteralText("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
+				this.gameSpace.getSourceConfig().getName().copy().formatted(Formatting.BOLD, Formatting.GOLD),
+				new TranslatableText("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
+				new TranslatableText("text.the_towers.guide.jumping_into_pool").formatted(Formatting.WHITE),
+				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.WHITE),
+				new LiteralText("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
+		};
+
+		for(Text text : GUIDE_LINES) {
+			this.gameSpace.getPlayers().sendMessage(text);
+		}
 		this.teamMap.keySet().forEach(gameTeam -> {
 			this.teamManager.playersIn(gameTeam).forEach(player -> {
 				if(player != null) {
@@ -144,16 +163,19 @@ public class TheTowersActive {
 				this.teamManager.playersIn(gameTeam).forEach(player -> {
 					TheTowersParticipant participant = this.participantMap.get(player);
 					if(player != null) {
-						if(participant.isRespawning && team.health > 0) {
-							participant.ticksUntilRespawn--;
-							player.sendMessage(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20)).formatted(Formatting.YELLOW), true);
+						if(participant.ticksUntilRespawn >= 0 && team.health > 0) {
+							if((participant.ticksUntilRespawn + 1) % 20 == 0) {
+								player.networkHandler.sendPacket(new TitleFadeS2CPacket(0, 90, 0));
+								player.networkHandler.sendPacket(new TitleS2CPacket(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20 + 1)).formatted(Formatting.GOLD)));
+							}
 							if(participant.ticksUntilRespawn == 0) {
 								player.changeGameMode(GameMode.SURVIVAL);
+								player.networkHandler.sendPacket(new TitleS2CPacket(new LiteralText("")));
 								this.resetPlayer(player);
 								this.resetPlayerInventory(player);
 								this.spawnPlayerAtTheirSpawn(player);
-								participant.isRespawning = false;
 							}
+							participant.ticksUntilRespawn--;
 						}
 
 						// Check for players in pools.
@@ -166,12 +188,12 @@ public class TheTowersActive {
 									this.spawnPlayerAtTheirSpawn(player);
 									enemyTeam.health--;
 									if(this.config.healthStealth()) {
-										Text msg = FormattingUtil.format(FormattingUtil.HEALTH_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_stole", player.getName(), enemyGameTeam.display()));
+										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_stole", player.getName(), enemyGameTeam.display()));
 										this.gameSpace.getPlayers().sendMessage(msg);
 										team.health++;
 									}
 									else {
-										Text msg = FormattingUtil.format(FormattingUtil.HEALTH_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_removed", player.getName(), enemyGameTeam.display()));
+										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_removed", player.getName(), enemyGameTeam.display()));
 										this.gameSpace.getPlayers().sendMessage(msg);
 									}
 									this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_BLAZE_HURT);
@@ -183,7 +205,7 @@ public class TheTowersActive {
 				});
 			});
 			if(gameTime % 20 == 0) {
-				this.sidebar.update(gameTime, this.teamMap, this.config.maxHealth());
+				this.sidebar.update(gameTime, this.teamMap);
 			}
 		}
 
@@ -231,6 +253,7 @@ public class TheTowersActive {
 			this.participantMap.keySet().forEach(player -> {
 				player.changeGameMode(GameMode.SPECTATOR);
 				this.resetPlayer(player);
+				this.sidebar.update(world.getTime(), this.teamMap);
 			});
 		}
 	}
@@ -289,20 +312,19 @@ public class TheTowersActive {
 	}
 
 	public void spawnPlayerAtCenter(ServerPlayerEntity player) {
-		this.spawnPlayerAt(player, new BlockPos(this.gameMap.center()), 0.0F, 0.0F);
+		this.spawnPlayerAt(player, this.gameMap.spawn(), 0.0F, 0.0F);
 	}
 
 	public void spawnPlayerAtTheirSpawn(ServerPlayerEntity player) {
 		TeamRegion region = this.gameMap.teamRegions().get(this.teamManager.teamFor(player));
-		BlockPos spawnPosition = new BlockPos(region.spawn().center());
+		Vec3d spawnPosition = region.spawn().center();
 		this.spawnPlayerAt(player, spawnPosition, region.spawnYaw(), region.spawnPitch());
 	}
 
-	public void spawnPlayerAt(ServerPlayerEntity player, BlockPos pos, float yaw, float pitch) {
-		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+	public void spawnPlayerAt(ServerPlayerEntity player, Vec3d pos, float yaw, float pitch) {
+		player.teleport(this.world, pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
+		player.setVelocity(Vec3d.ZERO);
 		player.fallDistance = 0.0f;
-		this.world.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getId());
-		player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, yaw, pitch);
 	}
 
 	// GENERAL LISTENERS
@@ -319,9 +341,11 @@ public class TheTowersActive {
 
 	private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
 		TheTowersParticipant participant = this.participantMap.get(player);
-		if(participant != null) {
+		if(participant == null) {
+			this.spawnPlayerAtCenter(player);
+		}
+		else {
 			participant.ticksUntilRespawn = this.config.respawnCooldown() * 20L;
-			participant.isRespawning = true;
 			player.changeGameMode(GameMode.SPECTATOR);
 			for(int i = 0; i < player.getInventory().size(); ++i) {
 				ItemStack stack = player.getInventory().getStack(i);
@@ -333,8 +357,15 @@ public class TheTowersActive {
 			this.gameSpace.getPlayers().sendMessage(msg);
 
 			this.resetPlayer(player);
+
+			player.teleport(player.getX(), player.getY() + 1000, player.getZ());
+			player.networkHandler.sendPacket(new GameStateChangeS2CPacket(new GameStateChangeS2CPacket.Reason(3), 3));
+			PlayerAbilities abilities = new PlayerAbilities();
+			abilities.allowFlying = false;
+			player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(abilities));
+			player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, (this.config.respawnCooldown() + 1) * 20, 1, true, false));
+			player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOW_FALLING, (this.config.respawnCooldown() + 1) * 20, 10, true, false));
 		}
-		this.spawnPlayerAtCenter(player);
 		return ActionResult.FAIL;
 	}
 
