@@ -1,0 +1,20 @@
+{
+	"game.the_towers.classic": "The Towers : Classique",
+	"game.the_towers.the_towers": "The Towers",
+	"text.the_towers.cannot_break": "Vous ne pouvez pas casser ce bloc !",
+	"text.the_towers.cannot_drop_armor": "Vous ne pouvez pas balancer l'armure de votre équipe !",
+	"text.the_towers.cannot_place": "Vous ne pouvez placer de bloc ici !",
+	"text.the_towers.cannot_use": "Vous ne pouvez pas utiliser ce bloc !",
+	"text.the_towers.guide.craft_stuff": "Fabriquez vos armes et outils à l'aide des matériaux dans les coffres !",
+	"text.the_towers.guide.jumping_into_pool": "Sauter dans la piscine d'une équipe adverse leur retira un point de vie.",
+	"text.the_towers.guide.protect_your_pool": "Faites en sortes de bien protéger votre piscine !",
+	"text.the_towers.health_removed": "%s a retiré un point de vie de l'équipe %s !",
+	"text.the_towers.health_stole": "%s a volé un point de vie de l'équipe %s !",
+	"text.the_towers.nobody_won": "Personne n'a gagné !",
+	"text.the_towers.pool": "Piscine %s",
+	"text.the_towers.respawn_in": "Réapparition dans %s...",
+	"text.the_towers.sidebar.entry": "%s: %s",
+	"text.the_towers.team_eliminated": "L'équipe %s a été éliminée !",
+	"text.the_towers.team_won": "L'équipe %s a gagné !",
+	"text.the_towers.time": "Temps : %s"
+}
