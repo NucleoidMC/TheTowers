@@ -4,8 +4,8 @@
 	"map": "the_towers:classic",
 	"players": {
 		"min": 1,
-		"threshold": 4,
-		"max": 12
+		"threshold": 8,
+		"max": 16
 	},
 	"teams": [
 		{
