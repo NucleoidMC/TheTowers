@@ -1,4 +1,6 @@
 {
+	"error.the_towers.generator_load": "Échec du chargement d'un générateur",
+	"error.the_towers.team_region_load": "Échec du chargement de la région de l'équipe %s",
 	"game.the_towers.classic": "The Towers : Classique",
 	"game.the_towers.the_towers": "The Towers",
 	"text.the_towers.cannot_break": "Vous ne pouvez pas casser ce bloc !",

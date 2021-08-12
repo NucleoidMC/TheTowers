@@ -5,9 +5,32 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
+import xyz.nucleoid.map_templates.TemplateRegion;
+import xyz.nucleoid.plasmid.game.GameOpenException;
+
+import java.util.Objects;
 
 public record Generator(GeneratorType type, Vec3d pos) {
+	/**
+	 * Creates a generator by reading a template region. Can throw a {@link NullPointerException} if the data of the generator is missing.
+	 *
+	 * @param region the region of the generator
+	 */
+	public static Generator fromTemplate(TemplateRegion region) {
+		try {
+			GeneratorType type = Objects.requireNonNull(GeneratorType.get(Identifier.tryParse(region.getData().getString("Type"))));
+			Vec3d vec3d = region.getBounds().center();
+
+			return new Generator(type, vec3d);
+		}
+		catch(NullPointerException e) {
+			throw new GameOpenException(new TranslatableText("error.the_towers.generator_load"), e);
+		}
+	}
+
 	public void tick(ServerWorld world, long gameTime) {
 		if(gameTime % type.interval() == 0) {
 			ItemEntity itemEntity = new ItemEntity(world, pos.getX(), pos.getY(), pos.getZ(), type.stack().copy());

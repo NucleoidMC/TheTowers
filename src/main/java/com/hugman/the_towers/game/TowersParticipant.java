@@ -1,8 +1,8 @@
 package com.hugman.the_towers.game;
 
-public class TheTowersParticipant {
+public class TowersParticipant {
 	public long ticksUntilRespawn;
 
-	TheTowersParticipant() {
+	TowersParticipant() {
 	}
 }

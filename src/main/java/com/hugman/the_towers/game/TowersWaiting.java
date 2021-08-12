@@ -1,8 +1,8 @@
 package com.hugman.the_towers.game;
 
-import com.hugman.the_towers.config.TheTowersConfig;
-import com.hugman.the_towers.game.map.TheTowersMap;
-import com.hugman.the_towers.game.map.TheTowersMapGenerator;
+import com.hugman.the_towers.config.TowersConfig;
+import com.hugman.the_towers.game.map.TowersMap;
+import com.hugman.the_towers.game.map.TowersMapGenerator;
 import eu.pb4.holograms.api.Holograms;
 import eu.pb4.holograms.api.holograms.AbstractHologram;
 import eu.pb4.holograms.api.holograms.WorldHologram;
@@ -41,10 +41,10 @@ import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.List;
 
-public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowersMap map, TheTowersConfig config, TeamSelectionLobby teamSelection, TeamManager teamManager) {
-	public static GameOpenProcedure open(GameOpenContext<TheTowersConfig> context) {
-		TheTowersConfig config = context.config();
-		TheTowersMap map = TheTowersMapGenerator.loadFromConfig(context.server(), config);
+public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection, TeamManager teamManager) {
+	public static GameOpenProcedure open(GameOpenContext<TowersConfig> context) {
+		TowersConfig config = context.config();
+		TowersMap map = TowersMapGenerator.loadFromConfig(context.server(), config);
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
 				.setGenerator(map.asGenerator(context.server()));
@@ -54,7 +54,7 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 			TeamManager teamManager = TeamManager.addTo(activity);
 
 			TeamSelectionLobby teamSelection = TeamSelectionLobby.applyTo(activity, config.teamConfig());
-			TheTowersWaiting waiting = new TheTowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection, teamManager);
+			TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection, teamManager);
 
 			activity.setRule(GameRuleType.INTERACTION, ActionResult.FAIL);
 
@@ -86,24 +86,22 @@ public record TheTowersWaiting(GameSpace gameSpace, ServerWorld world, TheTowers
 	}
 
 	private GameResult requestStart() {
-		List<GameTeam> teams = this.config().teamConfig();
+		Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
+		Object2ObjectMap<GameTeam, TeamData> teamMap = new Object2ObjectOpenHashMap<>();
 
-		Object2ObjectMap<ServerPlayerEntity, TheTowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
-		Object2ObjectMap<GameTeam, TheTowersTeam> teamMap = new Object2ObjectOpenHashMap<>();
-
-		for(GameTeam gameTeam : teams) {
-			this.teamManager.addTeam(gameTeam);
-			this.teamManager.setFriendlyFire(gameTeam, false);
-			this.teamManager.setCollisionRule(gameTeam, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
-			teamMap.put(gameTeam, new TheTowersTeam(this.config.maxHealth()));
+		for(GameTeam team : this.config().teamConfig()) {
+			this.teamManager.addTeam(team);
+			this.teamManager.setFriendlyFire(team, false);
+			this.teamManager.setCollisionRule(team, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
+			teamMap.put(team, new TeamData(this.config.maxHealth()));
 		}
 
 		teamSelection.allocate((gameTeam, player) -> {
-			participantMap.put(player, new TheTowersParticipant());
+			participantMap.put(player, new TowersParticipant());
 			teamManager.addPlayerTo(player, gameTeam);
 		});
 
-		TheTowersActive.enable(this.gameSpace, this.world, this.map, this.config, participantMap, teamMap, this.teamManager);
+		TowersActive.enable(this.gameSpace, this.world, this.map, this.config, participantMap, teamMap, this.teamManager);
 		return GameResult.ok();
 	}
 

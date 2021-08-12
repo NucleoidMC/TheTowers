@@ -1,9 +1,9 @@
 package com.hugman.the_towers.game;
 
-public class TheTowersTeam {
+public class TeamData {
 	public int health;
 
-	TheTowersTeam(int health) {
+	TeamData(int health) {
 		this.health = health;
 	}
 }

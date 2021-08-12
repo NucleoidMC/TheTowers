@@ -1,7 +1,8 @@
 package com.hugman.the_towers;
 
-import com.hugman.the_towers.config.TheTowersConfig;
-import com.hugman.the_towers.game.TheTowersWaiting;
+import com.hugman.the_towers.config.TowersConfig;
+import com.hugman.the_towers.game.TowersWaiting;
+import com.hugman.the_towers.game.map.parts.GeneratorType;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +19,7 @@ public class TheTowers implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		GameType.register(TheTowers.id("the_towers"), TheTowersConfig.CODEC, TheTowersWaiting::open);
+		GeneratorType.register();
+		GameType.register(TheTowers.id("the_towers"), TowersConfig.CODEC, TowersWaiting::open);
 	}
 }

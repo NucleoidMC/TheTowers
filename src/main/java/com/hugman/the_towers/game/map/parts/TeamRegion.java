@@ -2,7 +2,7 @@ package com.hugman.the_towers.game.map.parts;
 
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.TranslatableText;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
@@ -13,7 +13,7 @@ import java.util.Objects;
 
 public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, float spawnYaw, float spawnPitch) {
 	/**
-	 * Creates a team region by reading the mapTemplateId template's metadata. Can throw a {@link NullPointerException} if the regions are not specified in the mapTemplateId template.
+	 * Creates a team region by reading the map template's metadata. Can throw a {@link NullPointerException} if the regions are not specified in the map template.
 	 *
 	 * @param team the team which needs its regions to be found
 	 */
@@ -35,7 +35,7 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
 			return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
 		}
 		catch(NullPointerException e) {
-			throw new GameOpenException(new LiteralText("Failed to load mapTemplateId template" + team.key()), e);
+			throw new GameOpenException(new TranslatableText("error.the_towers.team_region_load", team.display()), e);
 		}
 	}
 }

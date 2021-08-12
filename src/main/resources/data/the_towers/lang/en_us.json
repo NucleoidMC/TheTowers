@@ -1,4 +1,6 @@
 {
+	"error.the_towers.generator_load": "Failed to load generator",
+	"error.the_towers.team_region_load": "Failed to load %s team's region",
 	"game.the_towers.classic": "The Towers: Classic",
 	"game.the_towers.the_towers": "The Towers",
 	"text.the_towers.cannot_break": "You cannot break this block!",

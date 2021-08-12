@@ -15,23 +15,13 @@ public class FormattingUtil {
 	public static final Style WARNING_STYLE = Style.EMPTY.withColor(Formatting.RED);
 	public static final Style DEATH_STYLE = Style.EMPTY.withColor(TextColor.fromRgb(0xbfbfbf));
 
-	public static final String GENERAL_PREFIX = "»";
-	public static final String DEATH_PREFIX = "☠";
-	public static final String PICKAXE_PREFIX = "⛏";
-	public static final String HEALTH_PREFIX = "✚";
-	public static final String SUN_PREFIX = "☀";
-	public static final String UMBRELLA_PREFIX = "☂";
-	public static final String CLOUD_PREFIX = "☁";
-	public static final String MUSIC_PREFIX = "♫";
-	public static final String HEART_PREFIX = "♥";
-	public static final String X_PREFIX = "✘";
-	public static final String HOURGLASS_PREFIX = "⌛";
-	public static final String CLOCK_PREFIX = "⌚";
-	public static final String STAR_PREFIX = "★";
-
-	public static final String CHECKMARK = "✔";
-	public static final String HEALTH = "✚";
-
+	public static final String GENERAL_SYMBOL = "»";
+	public static final String CHECKMARK_SYMBOL = "✔";
+	public static final String X_SYMBOL = "✘";
+	public static final String HEALTH_SYMBOL = "✚";
+	public static final String SKULL_SYMBOL = "☠";
+	public static final String STAR_SYMBOL = "★";
+	public static final String CLOCK_SYMBOL = "⌚";
 
 	public static MutableText format(String prefix, Style style, Text message) {
 		return new LiteralText(prefix + " ").setStyle(PREFIX_STYLE).append(message.shallowCopy().fillStyle(style));
