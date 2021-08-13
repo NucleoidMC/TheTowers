@@ -1,7 +1,7 @@
 {
 	"type": "the_towers:the_towers",
-	"translation": "game.the_towers.classic",
-	"map": "the_towers:classic",
+	"translation": "game.the_towers.classic.two_teams",
+	"map": "the_towers:classic/two_teams",
 	"players": {
 		"min": 1,
 		"threshold": 8,

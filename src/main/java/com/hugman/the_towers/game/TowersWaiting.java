@@ -78,10 +78,10 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
 		};
 
-		Vec3d pos = this.map.rules().add(0.0D, 2.3D, 0.0D);
+		Vec3d pos = this.map.rules();
 		this.world.getChunk(new BlockPos(pos));
 		WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
-		hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
+		hologram.setAlignment(AbstractHologram.VerticalAlign.TOP);
 		hologram.show();
 	}
 

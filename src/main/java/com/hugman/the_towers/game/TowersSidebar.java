@@ -23,7 +23,7 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
 	 * @param time    the game's time in ticks
 	 * @param teamMap the map of team
 	 */
-	public void update(long time, Object2ObjectMap<GameTeam, TeamData> teamMap) {
+	public void update(long time, long nextRefillTick, Object2ObjectMap<GameTeam, TeamData> teamMap) {
 		sidebarWidget.set(content -> {
 			content.add(new LiteralText(""));
 			teamMap.forEach((gameTeam, team) -> {
@@ -37,12 +37,15 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
 				else {
 					text.append(gameTeam.display().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
 							.append(new LiteralText(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
-							.append(new LiteralText(FormattingUtil.X_SYMBOL).formatted(Formatting.RED));
+							.append(new LiteralText(FormattingUtil.X_SYMBOL).formatted(Formatting.DARK_GRAY));
 				}
 				content.add(text);
 			});
+			//TODO: fix the refill method
+			//content.add(new LiteralText(""));
+			//content.add(new TranslatableText("text.the_towers.sidebar.refill_in", TickUtil.format(nextRefillTick - time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
 			content.add(new LiteralText(""));
-			content.add(new LiteralText(FormattingUtil.CLOCK_SYMBOL + " ").formatted(Formatting.GRAY).append(new TranslatableText("text.the_towers.time", TickUtil.format(time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
+			content.add(new LiteralText(FormattingUtil.CLOCK_SYMBOL + " ").formatted(Formatting.GRAY).append(new TranslatableText("text.the_towers.sidebar.time", TickUtil.format(time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
 		});
 	}
 }

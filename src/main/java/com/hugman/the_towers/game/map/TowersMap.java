@@ -32,7 +32,7 @@ public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<Blo
 			spawn = spawnBounds.center();
 		}
 		else {
-			TheTowers.LOGGER.warn("Missing map spawn, set to default [0 50 0]");
+			TheTowers.LOGGER.warn("Missing spawn position, set to default [0 50 0]");
 		}
 		Vec3d rules = spawn;
 		BlockBounds rulesBounds = metadata.getFirstRegionBounds("rules");
@@ -40,7 +40,7 @@ public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<Blo
 			rules = rulesBounds.center();
 		}
 		else {
-			TheTowers.LOGGER.warn("Missing map rules, set to spawn position");
+			TheTowers.LOGGER.warn("Missing rules display position, set to spawn position");
 		}
 
 		List<BlockBounds> protectedBounds = metadata.getRegionBounds("protected").collect(Collectors.toList());

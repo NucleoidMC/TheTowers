@@ -1,7 +1,8 @@
 {
 	"error.the_towers.generator_load": "Échec du chargement d'un générateur",
 	"error.the_towers.team_region_load": "Échec du chargement de la région de l'équipe %s",
-	"game.the_towers.classic": "The Towers : Classique",
+	"game.the_towers.classic.two_teams": "The Towers: Classique (2 équipes)",
+	"game.the_towers.classic.four_teams": "The Towers: Classique (4 équipes)",
 	"game.the_towers.the_towers": "The Towers",
 	"text.the_towers.cannot_break": "Vous ne pouvez pas casser ce bloc !",
 	"text.the_towers.cannot_drop_armor": "Vous ne pouvez pas balancer l'armure de votre équipe !",
@@ -16,7 +17,8 @@
 	"text.the_towers.pool": "Piscine %s",
 	"text.the_towers.respawn_in": "Réapparition dans %s...",
 	"text.the_towers.sidebar.entry": "%s: %s",
+	"text.the_towers.sidebar.refill_in": "Restockage dans : %s",
+	"text.the_towers.sidebar.time": "Temps : %s",
 	"text.the_towers.team_eliminated": "L'équipe %s a été éliminée !",
-	"text.the_towers.team_won": "L'équipe %s a gagné !",
-	"text.the_towers.time": "Temps : %s"
+	"text.the_towers.team_won": "L'équipe %s a gagné !"
 }
