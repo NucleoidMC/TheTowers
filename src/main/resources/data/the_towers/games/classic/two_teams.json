@@ -10,17 +10,17 @@
 	"teams": [
 		{
 			"key": "blue",
-			"color": "blue",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.blue"
-			}
+			},
+			"color": "blue"
 		},
 		{
 			"key": "red",
-			"color": "red",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.red"
-			}
+			},
+			"color": "red"
 		}
 	],
 	"max_health": 10,

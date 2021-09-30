@@ -5,13 +5,14 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.Identifier;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 import xyz.nucleoid.plasmid.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.game.common.team.GameTeamList;
 
 import java.util.List;
 
-public record TowersConfig(PlayerConfig playerConfig, List<GameTeam> teamConfig, Identifier mapTemplateId, int maxHealth, boolean healthStealth, int respawnCooldown, int refillCooldown) {
+public record TowersConfig(PlayerConfig playerConfig, GameTeamList teamConfig, Identifier mapTemplateId, int maxHealth, boolean healthStealth, int respawnCooldown, int refillCooldown) {
 	public static final Codec<TowersConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			PlayerConfig.CODEC.fieldOf("players").forGetter(TowersConfig::playerConfig),
-			GameTeam.CODEC.listOf().fieldOf("teams").forGetter(TowersConfig::teamConfig),
+			GameTeamList.CODEC.fieldOf("teams").forGetter(TowersConfig::teamConfig),
 			Identifier.CODEC.fieldOf("map").forGetter(TowersConfig::mapTemplateId),
 			Codec.INT.fieldOf("max_health").forGetter(TowersConfig::maxHealth),
 			Codec.BOOL.fieldOf("health_stealth").forGetter(TowersConfig::healthStealth),

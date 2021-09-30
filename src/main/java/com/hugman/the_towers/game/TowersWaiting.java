@@ -6,10 +6,7 @@ import com.hugman.the_towers.game.map.TowersMapGenerator;
 import eu.pb4.holograms.api.Holograms;
 import eu.pb4.holograms.api.holograms.AbstractHologram;
 import eu.pb4.holograms.api.holograms.WorldHologram;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
@@ -27,8 +24,6 @@ import xyz.nucleoid.plasmid.game.GameOpenProcedure;
 import xyz.nucleoid.plasmid.game.GameResult;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.common.team.GameTeam;
-import xyz.nucleoid.plasmid.game.common.team.TeamManager;
 import xyz.nucleoid.plasmid.game.common.team.TeamSelectionLobby;
 import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
 import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
@@ -39,9 +34,7 @@ import xyz.nucleoid.stimuli.event.player.PlayerAttackEntityEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
-import java.util.List;
-
-public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection, TeamManager teamManager) {
+public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection) {
 	public static GameOpenProcedure open(GameOpenContext<TowersConfig> context) {
 		TowersConfig config = context.config();
 		TowersMap map = TowersMapGenerator.loadFromConfig(context.server(), config);
@@ -51,10 +44,9 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 
 		return context.openWithWorld(worldConfig, (activity, world) -> {
 			GameWaitingLobby.addTo(activity, config.playerConfig());
-			TeamManager teamManager = TeamManager.addTo(activity);
 
-			TeamSelectionLobby teamSelection = TeamSelectionLobby.applyTo(activity, config.teamConfig());
-			TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection, teamManager);
+			TeamSelectionLobby teamSelection = TeamSelectionLobby.addTo(activity, config.teamConfig());
+			TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection);
 
 			activity.setRule(GameRuleType.INTERACTION, ActionResult.FAIL);
 
@@ -72,7 +64,7 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 
 	private void enable() {
 		Text[] GUIDE_LINES = {
-				this.gameSpace.getSourceConfig().getName().copy().formatted(Formatting.BOLD, Formatting.GOLD),
+				this.gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
 				new TranslatableText("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
 				new TranslatableText("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
 				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
@@ -86,22 +78,7 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 	}
 
 	private GameResult requestStart() {
-		Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap = new Object2ObjectOpenHashMap<>();
-		Object2ObjectMap<GameTeam, TeamData> teamMap = new Object2ObjectOpenHashMap<>();
-
-		for(GameTeam team : this.config().teamConfig()) {
-			this.teamManager.addTeam(team);
-			this.teamManager.setFriendlyFire(team, false);
-			this.teamManager.setCollisionRule(team, AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS);
-			teamMap.put(team, new TeamData(this.config.maxHealth()));
-		}
-
-		teamSelection.allocate((gameTeam, player) -> {
-			participantMap.put(player, new TowersParticipant());
-			teamManager.addPlayerTo(player, gameTeam);
-		});
-
-		TowersActive.enable(this.gameSpace, this.world, this.map, this.config, participantMap, teamMap, this.teamManager);
+		TowersActive.enable(this.gameSpace, this.world, this.map, this.config, this.teamSelection);
 		return GameResult.ok();
 	}
 

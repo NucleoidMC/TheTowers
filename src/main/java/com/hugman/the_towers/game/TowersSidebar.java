@@ -14,7 +14,7 @@ import xyz.nucleoid.plasmid.game.common.widget.SidebarWidget;
 
 public record TowersSidebar(SidebarWidget sidebarWidget) {
 	public static TowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
-		return new TowersSidebar(widgets.addSidebar(gameSpace.getSourceConfig().getName().copy().formatted(Formatting.BOLD, Formatting.GOLD)));
+		return new TowersSidebar(widgets.addSidebar(gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD)));
 	}
 
 	/**
@@ -29,13 +29,13 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
 			teamMap.forEach((gameTeam, team) -> {
 				MutableText text = new LiteralText("");
 				if(team.health > 0) {
-					text.append(gameTeam.display().shallowCopy().formatted(Formatting.BOLD))
+					text.append(gameTeam.config().name().shallowCopy().formatted(Formatting.BOLD))
 							.append(new LiteralText(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
 							.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
 							.append(new LiteralText(FormattingUtil.HEALTH_SYMBOL).formatted(Formatting.GREEN));
 				}
 				else {
-					text.append(gameTeam.display().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
+					text.append(gameTeam.config().name().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
 							.append(new LiteralText(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
 							.append(new LiteralText(FormattingUtil.X_SYMBOL).formatted(Formatting.DARK_GRAY));
 				}

@@ -12,6 +12,7 @@ import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
 import xyz.nucleoid.plasmid.game.world.generator.TemplateChunkGenerator;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<BlockBounds> protectedBounds, List<Generator> generators, Map<GameTeam, TeamRegion> teamRegions) {
+public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<BlockBounds> protectedBounds, List<Generator> generators, Map<GameTeamKey, TeamRegion> teamRegions) {
 	/**
 	 * Creates the map from a map template by reading its metadata.
 	 */
@@ -45,15 +46,15 @@ public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<Blo
 
 		List<BlockBounds> protectedBounds = metadata.getRegionBounds("protected").collect(Collectors.toList());
 		List<Generator> generators = new ArrayList<>();
-		Map<GameTeam, TeamRegion> teamRegions = new HashMap<>();
+		Map<GameTeamKey, TeamRegion> teamRegions = new HashMap<>();
 
 		for(TemplateRegion region : metadata.getRegions("generator").collect(Collectors.toList())) {
 			generators.add(Generator.fromTemplate(region));
 		}
 
 		for(GameTeam team : config.teamConfig()) {
-			TeamRegion region = TeamRegion.fromTemplate(team, metadata);
-			teamRegions.put(team, region);
+			TeamRegion region = TeamRegion.fromTemplate(team.key(), metadata);
+			teamRegions.put(team.key(), region);
 		}
 
 		return new TowersMap(template, spawn, rules, protectedBounds, generators, teamRegions);

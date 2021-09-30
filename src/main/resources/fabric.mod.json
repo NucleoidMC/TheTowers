@@ -3,7 +3,7 @@
 	"id": "the_towers",
 	"version": "${version}",
 	"name": "The Towers",
-	"description": "The Towers, yay!!",
+	"description": "The Towers minigame",
 	"authors": [
 		"Hugman"
 	],
@@ -18,7 +18,7 @@
 		"fabricloader": ">=0.9.1",
 		"fabric": "*",
 		"minecraft": "1.17.x",
-		"plasmid": "0.5.x",
+		"plasmid": ">=0.5.10",
 		"java": ">=16"
 	}
 }

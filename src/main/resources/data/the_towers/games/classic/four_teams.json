@@ -10,31 +10,31 @@
 	"teams": [
 		{
 			"key": "blue",
-			"color": "blue",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.blue"
-			}
+			},
+			"color": "blue"
 		},
 		{
 			"key": "green",
-			"color": "lime",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.green"
-			}
+			},
+			"color": "lime"
 		},
 		{
 			"key": "yellow",
-			"color": "yellow",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.yellow"
-			}
+			},
+			"color": "yellow"
 		},
 		{
 			"key": "red",
-			"color": "red",
-			"display": {
+			"name": {
 				"translate": "color.minecraft.red"
-			}
+			},
+			"color": "red"
 		}
 	],
 	"max_health": 5,
