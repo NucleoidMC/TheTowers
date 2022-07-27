@@ -3,9 +3,8 @@ package com.hugman.the_towers.game;
 import com.hugman.the_towers.util.FormattingUtil;
 import com.hugman.the_towers.util.TickUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
@@ -25,27 +24,27 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
 	 */
 	public void update(long time, long nextRefillTick, Object2ObjectMap<GameTeam, TeamData> teamMap) {
 		sidebarWidget.set(content -> {
-			content.add(new LiteralText(""));
+			content.add(Text.literal(""));
 			teamMap.forEach((gameTeam, team) -> {
-				MutableText text = new LiteralText("");
+				MutableText text = Text.literal("");
 				if(team.health > 0) {
-					text.append(gameTeam.config().name().shallowCopy().formatted(Formatting.BOLD))
-							.append(new LiteralText(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
-							.append(new LiteralText(String.valueOf(team.health)).formatted(Formatting.WHITE))
-							.append(new LiteralText(FormattingUtil.HEALTH_SYMBOL).formatted(Formatting.GREEN));
+					text.append(gameTeam.config().name().copyContentOnly().formatted(Formatting.BOLD))
+							.append(Text.literal(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
+							.append(Text.literal(String.valueOf(team.health)).formatted(Formatting.WHITE))
+							.append(Text.literal(FormattingUtil.HEALTH_SYMBOL).formatted(Formatting.GREEN));
 				}
 				else {
-					text.append(gameTeam.config().name().shallowCopy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
-							.append(new LiteralText(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
-							.append(new LiteralText(FormattingUtil.X_SYMBOL).formatted(Formatting.DARK_GRAY));
+					text.append(gameTeam.config().name().copyContentOnly().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
+							.append(Text.literal(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
+							.append(Text.literal(FormattingUtil.X_SYMBOL).formatted(Formatting.DARK_GRAY));
 				}
 				content.add(text);
 			});
 			//TODO: fix the refill method
-			//content.add(new LiteralText(""));
-			//content.add(new TranslatableText("text.the_towers.sidebar.refill_in", TickUtil.format(nextRefillTick - time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
-			content.add(new LiteralText(""));
-			content.add(new LiteralText(FormattingUtil.CLOCK_SYMBOL + " ").formatted(Formatting.GRAY).append(new TranslatableText("text.the_towers.sidebar.time", TickUtil.format(time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
+			//content.add(Text.literal(""));
+			//content.add(Text.translatable("text.the_towers.sidebar.refill_in", TickUtil.format(nextRefillTick - time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
+			content.add(Text.literal(""));
+			content.add(Text.literal(FormattingUtil.CLOCK_SYMBOL + " ").formatted(Formatting.GRAY).append(Text.translatable("text.the_towers.sidebar.time", TickUtil.format(time).copyContentOnly().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
 		});
 	}
 }

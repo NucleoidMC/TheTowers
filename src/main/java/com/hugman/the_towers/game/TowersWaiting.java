@@ -11,7 +11,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -65,9 +64,9 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 	private void enable() {
 		Text[] GUIDE_LINES = {
 				this.gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
-				new TranslatableText("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
-				new TranslatableText("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
-				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
+				Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
+				Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
+				Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
 		};
 
 		Vec3d pos = this.map.rules();

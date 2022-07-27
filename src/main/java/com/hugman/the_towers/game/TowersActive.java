@@ -30,9 +30,7 @@ import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -143,12 +141,12 @@ public class TowersActive {
 		this.nextRefillTick = this.gameTick + this.config.refillCooldown();
 
 		Text[] GUIDE_LINES = {
-				new LiteralText("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
+				Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
 				this.gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
-				new TranslatableText("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
-				new TranslatableText("text.the_towers.guide.jumping_into_pool").formatted(Formatting.WHITE),
-				new TranslatableText("text.the_towers.guide.protect_your_pool").formatted(Formatting.WHITE),
-				new LiteralText("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
+				Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
+				Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.WHITE),
+				Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.WHITE),
+				Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
 		};
 
 		for(Text text : GUIDE_LINES) {
@@ -163,7 +161,7 @@ public class TowersActive {
 					this.resetPlayerInventory(player);
 				}
 			});
-			WorldHologram hologram = Holograms.create(this.world, map.teamRegions().get(gameTeam.key()).pool().centerTop().add(0.0D, 0.5D, 0.0D), new TranslatableText("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
+			WorldHologram hologram = Holograms.create(this.world, map.teamRegions().get(gameTeam.key()).pool().centerTop().add(0.0D, 0.5D, 0.0D), Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
 			hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
 			hologram.show();
 		});
@@ -193,11 +191,11 @@ public class TowersActive {
 						if(participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
 							if((participant.ticksUntilRespawn + 1) % 20 == 0) {
 								player.networkHandler.sendPacket(new TitleFadeS2CPacket(0, 90, 0));
-								player.networkHandler.sendPacket(new TitleS2CPacket(new TranslatableText("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20 + 1)).formatted(Formatting.GOLD)));
+								player.networkHandler.sendPacket(new TitleS2CPacket(Text.translatable("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20 + 1)).formatted(Formatting.GOLD)));
 							}
 							if(participant.ticksUntilRespawn == 0) {
 								player.changeGameMode(GameMode.SURVIVAL);
-								player.networkHandler.sendPacket(new TitleS2CPacket(new LiteralText("")));
+								player.networkHandler.sendPacket(new TitleS2CPacket(Text.literal("")));
 								this.resetPlayer(player);
 								this.resetPlayerInventory(player);
 								this.spawnPlayerAtTheirSpawn(player);
@@ -215,12 +213,12 @@ public class TowersActive {
 									this.spawnPlayerAtTheirSpawn(player);
 									enemyTeamData.health--;
 									if(this.config.healthStealth()) {
-										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_stole", player.getName(), enemyTeam.config().name()));
+										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), enemyTeam.config().name()));
 										this.gameSpace.getPlayers().sendMessage(msg);
 										teamData.health++;
 									}
 									else {
-										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.health_removed", player.getName(), enemyTeam.config().name()));
+										Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), enemyTeam.config().name()));
 										this.gameSpace.getPlayers().sendMessage(msg);
 									}
 									this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_BLAZE_HURT);
@@ -246,8 +244,8 @@ public class TowersActive {
 		long aliveCount = this.teamMap.values().stream().filter(team -> team.health > 0).count();
 		// No teamConfig are alive. Weird!
 		if(aliveCount == 0) {
-			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.nobody_won"));
-			this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
+			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.nobody_won"));
+			this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
 			this.hasEnded = true;
 		}
 		this.teamMap.forEach((team, teamData) -> {
@@ -260,16 +258,16 @@ public class TowersActive {
 						this.resetPlayer(player);
 					}
 				});
-				Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_eliminated", team.config().name()));
-				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
+				Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", team.config().name()));
+				this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
 			}
 		});
 		this.teamMap.forEach((gameTeam, team) -> {
 			if(aliveCount == 1 && team.health > 0) {
 				// The selected team is the only team left that is alive. They win.
-				Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, new TranslatableText("text.the_towers.team_won", gameTeam.config().name()));
-				this.gameSpace.getPlayers().sendMessage(new LiteralText("\n").append(msg).append("\n"));
+				Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", gameTeam.config().name()));
+				this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
 				this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
 				this.hasEnded = true;
 			}
@@ -360,7 +358,7 @@ public class TowersActive {
 			return ActionResult.SUCCESS;
 		}
 		else {
-			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_drop_armor"));
+			Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_drop_armor"));
 			player.sendMessage(msg, false);
 			return ActionResult.FAIL;
 		}
@@ -380,7 +378,7 @@ public class TowersActive {
 					ItemScatterer.spawn(this.world, player.getBlockPos().getX(), player.getBlockPos().getY(), player.getBlockPos().getZ(), player.getInventory().getStack(i));
 				}
 			}
-			Text msg = FormattingUtil.format(FormattingUtil.SKULL_SYMBOL, FormattingUtil.DEATH_STYLE, source.getDeathMessage(player).shallowCopy());
+			Text msg = FormattingUtil.format(FormattingUtil.SKULL_SYMBOL, FormattingUtil.DEATH_STYLE, source.getDeathMessage(player).copyContentOnly());
 			this.gameSpace.getPlayers().sendMessage(msg);
 
 			this.resetPlayer(player);
@@ -399,7 +397,7 @@ public class TowersActive {
 	private ActionResult placeBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
 		for(BlockBounds bounds : this.map.protectedBounds()) {
 			if(bounds.contains(pos)) {
-				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_place"));
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
 				playerEntity.sendMessage(msg, false);
 				return ActionResult.FAIL;
 			}
@@ -407,7 +405,7 @@ public class TowersActive {
 		for(GameTeam team : this.teamMap.keySet()) {
 			if(team.key() != teamManager.teamFor(playerEntity)) {
 				if(this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
-					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_place"));
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
 					playerEntity.sendMessage(msg, false);
 					return ActionResult.FAIL;
 				}
@@ -421,7 +419,7 @@ public class TowersActive {
 		BlockPos pos = blockHitResult.getBlockPos();
 		for(BlockBounds bounds : this.map.protectedBounds()) {
 			if(bounds.contains(pos)) {
-				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_use"));
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
 				playerEntity.sendMessage(msg, false);
 				return ActionResult.FAIL;
 			}
@@ -429,7 +427,7 @@ public class TowersActive {
 		for(GameTeam team : this.teamMap.keySet()) {
 			if(team.key() != teamManager.teamFor(playerEntity)) {
 				if(this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
-					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_use"));
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
 					playerEntity.sendMessage(msg, false);
 					return ActionResult.FAIL;
 				}
@@ -441,7 +439,7 @@ public class TowersActive {
 	private ActionResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
 		for(BlockBounds bounds : this.map.protectedBounds()) {
 			if(bounds.contains(pos)) {
-				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_break"));
+				Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
 				playerEntity.sendMessage(msg, false);
 				return ActionResult.FAIL;
 			}
@@ -449,7 +447,7 @@ public class TowersActive {
 		for(GameTeam team : this.teamMap.keySet()) {
 			if(team.key() != teamManager.teamFor(playerEntity)) {
 				if(this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
-					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, new TranslatableText("text.the_towers.cannot_break"));
+					Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
 					playerEntity.sendMessage(msg, false);
 					return ActionResult.FAIL;
 				}
@@ -475,7 +473,7 @@ public class TowersActive {
 				BlockState state =this.map.template().getBlockState(pos);
 
 				this.world.setBlockState(pos, this.map.template().getBlockState(pos));
-				var blockEntity = this.map.template().getBlockEntityTag(pos);
+				var blockEntity = this.map.template().getBlockEntityNbt(pos);
 				if (blockEntity != null) {
 					// TODO: block entities
 				}

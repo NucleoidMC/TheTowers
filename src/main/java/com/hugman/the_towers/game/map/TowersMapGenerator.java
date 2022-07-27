@@ -2,7 +2,7 @@ package com.hugman.the_towers.game.map;
 
 import com.hugman.the_towers.config.TowersConfig;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.game.GameOpenException;
@@ -16,7 +16,7 @@ public class TowersMapGenerator {
 			return TowersMap.fromTemplate(template, config);
 		}
 		catch(IOException e) {
-			throw new GameOpenException(new LiteralText("Failed to load map template"), e);
+			throw new GameOpenException(Text.literal("Failed to load map template"), e);
 		}
 	}
 }

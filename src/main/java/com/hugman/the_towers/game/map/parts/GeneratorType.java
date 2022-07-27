@@ -46,15 +46,14 @@ public record GeneratorType(ItemStack stack, long interval) {
 			public void reload(ResourceManager manager) {
 				REGISTRY.clear();
 
-				Collection<Identifier> resources = manager.findResources("towers_generator_types", path -> path.endsWith(".json"));
+				var resources = manager.findResources("towers_generator_types", path -> path.getPath().endsWith(".json"));
 
-				for(Identifier path : resources) {
+				for(var path : resources.entrySet()) {
 					try {
-						Resource resource = manager.getResource(path);
-						try(Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+						try(Reader reader = new BufferedReader(new InputStreamReader(path.getValue().getInputStream()))) {
 							JsonElement json = new JsonParser().parse(reader);
 
-							Identifier identifier = identifierFromPath(path);
+							Identifier identifier = identifierFromPath(path.getKey());
 
 							DataResult<GeneratorType> result = CODEC.decode(JsonOps.INSTANCE, json).map(Pair::getFirst);
 

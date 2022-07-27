@@ -5,7 +5,7 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.map_templates.TemplateRegion;
@@ -27,7 +27,7 @@ public record Generator(GeneratorType type, Vec3d pos) {
 			return new Generator(type, vec3d);
 		}
 		catch(NullPointerException e) {
-			throw new GameOpenException(new TranslatableText("error.the_towers.generator_load"), e);
+			throw new GameOpenException(Text.translatable("error.the_towers.generator_load"), e);
 		}
 	}
 

@@ -2,12 +2,11 @@ package com.hugman.the_towers.game.map.parts;
 
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.game.GameOpenException;
-import xyz.nucleoid.plasmid.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
 
 import java.util.Objects;
@@ -34,7 +33,7 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
 			return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
 		}
 		catch(NullPointerException e) {
-			throw new GameOpenException(new TranslatableText("error.the_towers.team_region_load", teamKey.id()), e);
+			throw new GameOpenException(Text.translatable("error.the_towers.team_region_load", teamKey.id()), e);
 		}
 	}
 }

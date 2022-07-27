@@ -1,6 +1,5 @@
 package com.hugman.the_towers.util;
 
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -24,10 +23,10 @@ public class FormattingUtil {
 	public static final String CLOCK_SYMBOL = "⌚";
 
 	public static MutableText format(String prefix, Style style, Text message) {
-		return new LiteralText(prefix + " ").setStyle(PREFIX_STYLE).append(message.shallowCopy().fillStyle(style));
+		return Text.literal(prefix + " ").setStyle(PREFIX_STYLE).append(message.copyContentOnly().fillStyle(style));
 	}
 
 	public static MutableText format(String prefix, Text message) {
-		return new LiteralText(prefix + " ").setStyle(PREFIX_STYLE).append(message.shallowCopy());
+		return Text.literal(prefix + " ").setStyle(PREFIX_STYLE).append(message.copyContentOnly());
 	}
 }
