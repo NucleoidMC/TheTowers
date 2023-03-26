@@ -48,7 +48,7 @@ public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<Blo
 		List<Generator> generators = new ArrayList<>();
 		Map<GameTeamKey, TeamRegion> teamRegions = new HashMap<>();
 
-		for(TemplateRegion region : metadata.getRegions("generator").collect(Collectors.toList())) {
+		for(TemplateRegion region : metadata.getRegions("generator").toList()) {
 			generators.add(Generator.fromTemplate(region));
 		}
 

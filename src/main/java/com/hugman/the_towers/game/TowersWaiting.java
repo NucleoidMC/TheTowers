@@ -70,7 +70,7 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 		};
 
 		Vec3d pos = this.map.rules();
-		this.world.getChunk(new BlockPos(pos));
+		this.world.getChunk(BlockPos.ofFloored(pos));
 		WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
 		hologram.setAlignment(AbstractHologram.VerticalAlign.TOP);
 		hologram.show();
@@ -95,8 +95,8 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 	}
 
 	private void tpPlayer(ServerPlayerEntity player) {
-		BlockPos pos = new BlockPos(this.map.spawn());
-		ChunkPos chunkPos = new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
+		var pos = this.map.spawn();
+		ChunkPos chunkPos = new ChunkPos((int)pos.getX() >> 4, (int)pos.getZ() >> 4);
 		this.world.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getId());
 		player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);
 	}
