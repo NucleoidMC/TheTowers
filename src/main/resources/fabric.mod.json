@@ -1,24 +1,34 @@
 {
-	"schemaVersion": 1,
-	"id": "the_towers",
-	"version": "${version}",
-	"name": "The Towers",
-	"description": "The Towers minigame",
-	"authors": [
-		"Hugman"
-	],
-	"license": "MIT",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"com.hugman.the_towers.TheTowers"
-		]
-	},
-	"depends": {
-		"fabricloader": ">=0.9.1",
-		"fabric": "*",
-		"minecraft": ">=1.19.4",
-		"plasmid": "0.5.x",
-		"java": ">=16"
-	}
+  "schemaVersion": 1,
+  "name": "The Towers",
+  "id": "the_towers",
+  "version": "${version}",
+  "description": "Team minigame where you score points by getting into the other team's base",
+  "authors": [
+    "Hugman"
+  ],
+  "license": "LGPL-3.0-or-later",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.hugman.the_towers.TheTowers"
+    ]
+  },
+  "depends": {
+    "java": ">=17",
+    "minecraft": ">=1.20",
+    "fabricloader": ">=0.9.1",
+    "fabric-api": ">=0.86.1",
+    "plasmid": "0.5.x"
+  },
+  "custom": {
+    "mc-publish": {
+      "curseforge": 899405,
+      "modrinth": "JQ4geQ2t",
+      "loaders": [
+        "fabric",
+        "quilt"
+      ]
+    }
+  }
 }
