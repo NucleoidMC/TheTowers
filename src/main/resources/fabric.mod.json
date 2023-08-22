@@ -3,7 +3,8 @@
   "name": "The Towers",
   "id": "the_towers",
   "version": "${version}",
-  "description": "Team minigame where you score points by getting into the other team's base",
+  "icon": "assets/the_towers/logo.png",
+  "description": "Team minigame where you score points by getting into the other team's base!",
   "authors": [
     "Hugman"
   ],
