@@ -1,0 +1,11 @@
+{
+  "type": "nucleoid_extras:styled/simple_menu",
+  "name": {
+    "translate": "game.the_towers.the_towers"
+  },
+  "icon": "minecraft:andesite_wall",
+  "games": [
+    "the_towers:classic/two_teams",
+    "the_towers:classic/four_teams"
+  ]
+}
