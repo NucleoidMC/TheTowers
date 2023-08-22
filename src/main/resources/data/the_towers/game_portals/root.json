@@ -1,7 +1,7 @@
 {
   "type": "nucleoid_extras:styled/simple_menu",
   "name": {
-    "translate": "game.the_towers.the_towers"
+    "translate": "game.the_towers"
   },
   "icon": "minecraft:andesite_wall",
   "games": [

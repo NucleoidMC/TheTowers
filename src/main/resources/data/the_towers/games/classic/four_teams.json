@@ -1,5 +1,5 @@
 {
-	"type": "the_towers:the_towers",
+	"type": "the_towers:standard",
 	"translation": "game.the_towers.classic.four_teams",
 	"map": "the_towers:classic/four_teams",
 	"players": {
