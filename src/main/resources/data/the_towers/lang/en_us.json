@@ -22,6 +22,7 @@
 	"text.the_towers.team_eliminated": "The %s team has been eliminated!",
 	"text.the_towers.team_won": "The %s team has won!",
 
-	"error.the_towers.generator_load": "Failed to load generator",
+	"error.the_towers.generator.invalid_config": "Generator configuration is invalid",
+	"error.the_towers.generator.empty_config": "Generator configuration is empty",
 	"error.the_towers.team_region_load": "Failed to load %s team's region"
 }

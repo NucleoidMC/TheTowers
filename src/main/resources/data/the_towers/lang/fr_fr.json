@@ -22,6 +22,5 @@
 	"text.the_towers.team_eliminated": "L'équipe %s a été éliminée !",
 	"text.the_towers.team_won": "L'équipe %s a gagné !",
 
-	"error.the_towers.generator_load": "Échec du chargement d'un générateur",
 	"error.the_towers.team_region_load": "Échec du chargement de la région de l'équipe %s"
 }
