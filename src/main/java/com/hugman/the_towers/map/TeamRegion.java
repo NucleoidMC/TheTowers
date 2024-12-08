@@ -6,8 +6,8 @@ import net.minecraft.text.Text;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
-import xyz.nucleoid.plasmid.game.GameOpenException;
-import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
+import xyz.nucleoid.plasmid.api.game.GameOpenException;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 
 import java.util.Objects;
 

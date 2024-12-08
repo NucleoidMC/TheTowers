@@ -1,0 +1,30 @@
+{
+  "type": "the_towers:standard",
+  "name": {
+    "translate": "game.the_towers.classic.two_teams"
+  },
+  "map": "the_towers:classic/two_teams",
+  "players": {
+    "min": 1,
+    "threshold": 8,
+    "max": 16
+  },
+  "teams": [
+    {
+      "key": "blue",
+      "name": {
+        "translate": "color.minecraft.blue"
+      },
+      "color": "blue"
+    },
+    {
+      "key": "red",
+      "name": {
+        "translate": "color.minecraft.red"
+      },
+      "color": "red"
+    }
+  ],
+  "max_health": 10,
+  "health_stealth": false
+}

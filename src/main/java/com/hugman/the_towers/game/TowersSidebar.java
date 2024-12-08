@@ -6,14 +6,16 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.common.team.GameTeam;
-import xyz.nucleoid.plasmid.game.common.widget.SidebarWidget;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.api.game.common.widget.SidebarWidget;
 
 public record TowersSidebar(SidebarWidget sidebarWidget) {
     public static TowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
-        return new TowersSidebar(widgets.addSidebar(gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD)));
+        var gameName = gameSpace.getMetadata().sourceConfig().value().name();
+        if(gameName == null) gameName = Text.of("The Towers");
+        return new TowersSidebar(widgets.addSidebar(gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD)));
     }
 
     /**

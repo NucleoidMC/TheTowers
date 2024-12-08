@@ -3,34 +3,31 @@ package com.hugman.the_towers.game;
 import com.hugman.the_towers.config.TowersConfig;
 import com.hugman.the_towers.map.TowersMap;
 import com.hugman.the_towers.map.TowersMapGenerator;
-import eu.pb4.holograms.api.Holograms;
-import eu.pb4.holograms.api.holograms.AbstractHologram;
-import eu.pb4.holograms.api.holograms.WorldHologram;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.game.GameOpenContext;
-import xyz.nucleoid.plasmid.game.GameOpenProcedure;
-import xyz.nucleoid.plasmid.game.GameResult;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.common.team.TeamSelectionLobby;
-import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.player.PlayerOffer;
-import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
-import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.GameOpenProcedure;
+import xyz.nucleoid.plasmid.api.game.GameResult;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GameWaitingLobby;
+import xyz.nucleoid.plasmid.api.game.common.team.TeamSelectionLobby;
+import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
+import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.player.PlayerAttackEntityEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
+
+import java.util.Set;
 
 public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config,
                             TeamSelectionLobby teamSelection) {
@@ -44,23 +41,25 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
             TeamSelectionLobby teamSelection = TeamSelectionLobby.addTo(activity, config.teamConfig());
             TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection);
 
-            activity.setRule(GameRuleType.INTERACTION, ActionResult.FAIL);
+            activity.setRule(GameRuleType.INTERACTION, EventResult.DENY);
 
             activity.listen(GameActivityEvents.ENABLE, waiting::enable);
 
-            activity.listen(GamePlayerEvents.OFFER, waiting::offerPlayer);
+            activity.listen(GamePlayerEvents.ACCEPT, waiting::offerPlayer);
 
             activity.listen(GameActivityEvents.REQUEST_START, waiting::requestStart);
 
-            activity.listen(PlayerDamageEvent.EVENT, (player, source, amount) -> ActionResult.FAIL);
+            activity.listen(PlayerDamageEvent.EVENT, (player, source, amount) -> EventResult.DENY);
             activity.listen(PlayerDeathEvent.EVENT, waiting::killPlayer);
-            activity.listen(PlayerAttackEntityEvent.EVENT, (attacker, hand, attacked, hitResult) -> ActionResult.FAIL);
+            activity.listen(PlayerAttackEntityEvent.EVENT, (attacker, hand, attacked, hitResult) -> EventResult.DENY);
         });
     }
 
     private void enable() {
+        var gameName = this.gameSpace.getMetadata().sourceConfig().value().name();
+        if(gameName == null) gameName = Text.of("The Towers");
         Text[] GUIDE_LINES = {
-                this.gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
+                gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD),
                 Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
                 Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
                 Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
@@ -68,9 +67,10 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 
         Vec3d pos = this.map.rules();
         this.world.getChunk(BlockPos.ofFloored(pos));
-        WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
-        hologram.setAlignment(AbstractHologram.VerticalAlign.TOP);
-        hologram.show();
+        //TODO
+//        WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
+//        hologram.setAlignment(AbstractHologram.VerticalAlign.TOP);
+//        hologram.show();
     }
 
     private GameResult requestStart() {
@@ -78,23 +78,22 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
         return GameResult.ok();
     }
 
-    private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-        return offer.accept(this.world, this.map.spawn()).and(() -> {
-            ServerPlayerEntity player = offer.player();
-            player.changeGameMode(GameMode.ADVENTURE);
+    private JoinAcceptorResult offerPlayer(JoinAcceptor acceptor) {
+        return acceptor.teleport(this.world, this.map.spawn()).thenRun((players) -> {
+            players.forEach((player) -> {
+                player.changeGameMode(GameMode.ADVENTURE);
+            });
         });
     }
 
-    private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
+    private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
         player.setHealth(20.0f);
         this.tpPlayer(player);
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
     private void tpPlayer(ServerPlayerEntity player) {
         var pos = this.map.spawn();
-        ChunkPos chunkPos = new ChunkPos((int) pos.getX() >> 4, (int) pos.getZ() >> 4);
-        this.world.getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, chunkPos, 1, player.getId());
-        player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 0.0F, 0.0F);
+        player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, Set.of(), 0.0F, 0.0F, false);
     }
 }
