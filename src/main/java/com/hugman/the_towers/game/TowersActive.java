@@ -303,7 +303,7 @@ public class TowersActive {
             GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
             if (gameTeamKey instanceof GameTeamKey) {
                 TeamData theTowersTeam = teamMap.get(gameTeamKey);
-                if (theTowersTeam.health > 0) {
+                if (theTowersTeam instanceof TeamData && theTowersTeam.health > 0) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);
                     this.resetPlayerInventory(player);
