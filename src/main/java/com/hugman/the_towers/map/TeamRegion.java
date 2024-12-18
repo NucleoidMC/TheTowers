@@ -1,13 +1,14 @@
 package com.hugman.the_towers.map;
 
+import com.hugman.the_towers.TheTowers;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.text.Text;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
-import xyz.nucleoid.plasmid.game.GameOpenException;
-import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
+import xyz.nucleoid.plasmid.api.game.GameOpenException;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 
 import java.util.Objects;
 
@@ -28,7 +29,7 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
             BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();
 
             LongSet domains = new LongArraySet();
-            metadata.getRegionBounds(teamKey + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
+            metadata.getRegionBounds(teamKey.id() + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
 
             return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
         } catch (NullPointerException e) {

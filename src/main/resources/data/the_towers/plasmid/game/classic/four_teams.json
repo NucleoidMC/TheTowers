@@ -1,0 +1,44 @@
+{
+  "type": "the_towers:standard",
+  "name": {
+    "translate": "game.the_towers.classic.four_teams"
+  },
+  "map": "the_towers:classic/four_teams",
+  "players": {
+    "min": 1,
+    "threshold": 16,
+    "max": 32
+  },
+  "teams": [
+    {
+      "key": "blue",
+      "name": {
+        "translate": "color.minecraft.blue"
+      },
+      "color": "blue"
+    },
+    {
+      "key": "green",
+      "name": {
+        "translate": "color.minecraft.green"
+      },
+      "color": "lime"
+    },
+    {
+      "key": "yellow",
+      "name": {
+        "translate": "color.minecraft.yellow"
+      },
+      "color": "yellow"
+    },
+    {
+      "key": "red",
+      "name": {
+        "translate": "color.minecraft.red"
+      },
+      "color": "red"
+    }
+  ],
+  "max_health": 5,
+  "health_stealth": false
+}

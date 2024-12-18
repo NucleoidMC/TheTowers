@@ -8,10 +8,10 @@ import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
-import xyz.nucleoid.plasmid.game.GameOpenContext;
-import xyz.nucleoid.plasmid.game.common.team.GameTeam;
-import xyz.nucleoid.plasmid.game.common.team.GameTeamKey;
-import xyz.nucleoid.plasmid.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
+import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,9 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<BlockBounds> protectedBounds,
-                        List<Generator> generators, Map<GameTeamKey, TeamRegion> teamRegions,
-                        RuntimeWorldConfig worldConfig) {
+public record TowersMap(
+        MapTemplate template,
+        Vec3d spawn,
+        Vec3d rules,
+        List<BlockBounds> protectedBounds,
+        List<Generator> generators,
+        Map<GameTeamKey, TeamRegion> teamRegions,
+        RuntimeWorldConfig worldConfig
+) {
     /**
      * Creates the map from a map template by reading its metadata.
      */

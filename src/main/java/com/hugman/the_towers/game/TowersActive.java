@@ -1,12 +1,10 @@
 package com.hugman.the_towers.game;
 
+import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TowersConfig;
-import com.hugman.the_towers.map.TowersMap;
 import com.hugman.the_towers.map.TeamRegion;
+import com.hugman.the_towers.map.TowersMap;
 import com.hugman.the_towers.util.FormattingUtil;
-import eu.pb4.holograms.api.Holograms;
-import eu.pb4.holograms.api.holograms.AbstractHologram;
-import eu.pb4.holograms.api.holograms.WorldHologram;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
@@ -40,22 +38,29 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.map_templates.BlockBounds;
-import xyz.nucleoid.plasmid.game.GameActivity;
-import xyz.nucleoid.plasmid.game.GameCloseReason;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.common.team.*;
-import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.player.PlayerOffer;
-import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
-import xyz.nucleoid.plasmid.game.rule.GameRuleType;
-import xyz.nucleoid.plasmid.util.ItemStackBuilder;
+import xyz.nucleoid.plasmid.api.game.GameActivity;
+import xyz.nucleoid.plasmid.api.game.GameCloseReason;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.common.PlayerLimiter;
+import xyz.nucleoid.plasmid.api.game.common.team.*;
+import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
+import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
+import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.util.ItemStackBuilder;
+import xyz.nucleoid.plasmid.api.util.PlayerPos;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.block.BlockBreakEvent;
 import xyz.nucleoid.stimuli.event.block.BlockPlaceEvent;
 import xyz.nucleoid.stimuli.event.block.BlockUseEvent;
 import xyz.nucleoid.stimuli.event.item.ItemThrowEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
+
+import java.util.Set;
 
 public class TowersActive {
     private final GameSpace gameSpace;
@@ -65,7 +70,7 @@ public class TowersActive {
     private final TowersMap map;
 
     private Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap;
-    private Object2ObjectMap<GameTeam, TeamData> teamMap;
+    private Object2ObjectMap<GameTeamKey, TeamData> teamMap;
     private TeamManager teamManager;
 
     private final TowersSidebar sidebar;
@@ -99,7 +104,7 @@ public class TowersActive {
                     .setCollision(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS)
                     .build());
             this.teamManager.addTeam(team);
-            this.teamMap.put(team, new TeamData(this.config.maxHealth()));
+            this.teamMap.put(team.key(), new TeamData(this.config.maxHealth()));
         }
 
         teamSelection.allocate(this.gameSpace.getPlayers(), (gameTeam, player) -> {
@@ -110,9 +115,12 @@ public class TowersActive {
 
     public static void enable(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection) {
         gameSpace.setActivity(activity -> {
+            PlayerLimiter.addTo(activity, config.playerConfig().playerConfig());
             GlobalWidgets widgets = GlobalWidgets.addTo(activity);
             TowersSidebar sidebar = TowersSidebar.create(widgets, gameSpace);
             TowersActive active = new TowersActive(gameSpace, activity, world, map, config, sidebar, teamSelection);
+
+            TeamChat.addTo(activity, active.teamManager);
 
             activity.allow(GameRuleType.CRAFTING);
             activity.deny(GameRuleType.PORTALS);
@@ -126,7 +134,8 @@ public class TowersActive {
             activity.listen(GameActivityEvents.ENABLE, active::enable);
             activity.listen(GameActivityEvents.TICK, active::tick);
 
-            activity.listen(GamePlayerEvents.OFFER, active::offerPlayer);
+            activity.listen(GamePlayerEvents.OFFER, JoinOffer::accept);
+            activity.listen(GamePlayerEvents.ACCEPT, active::accept);
 
             activity.listen(PlayerDeathEvent.EVENT, active::killPlayer);
             activity.listen(ItemThrowEvent.EVENT, active::dropItem);
@@ -142,7 +151,7 @@ public class TowersActive {
 
         Text[] GUIDE_LINES = {
                 Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
-                this.gameSpace.getMetadata().sourceConfig().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
+                this.gameSpace.getMetadata().sourceConfig().value().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
                 Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
                 Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.WHITE),
                 Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.WHITE),
@@ -152,8 +161,8 @@ public class TowersActive {
         for (Text text : GUIDE_LINES) {
             this.gameSpace.getPlayers().sendMessage(text);
         }
-        this.teamMap.keySet().forEach(gameTeam -> {
-            this.teamManager.playersIn(gameTeam.key()).forEach(player -> {
+        this.teamMap.keySet().forEach(teamKey -> {
+            this.teamManager.playersIn(teamKey).forEach(player -> {
                 if (player != null) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);
@@ -161,9 +170,10 @@ public class TowersActive {
                     this.resetPlayerInventory(player);
                 }
             });
-            WorldHologram hologram = Holograms.create(this.world, map.teamRegions().get(gameTeam.key()).pool().centerTop().add(0.0D, 0.5D, 0.0D), Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
-            hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
-            hologram.show();
+            //TODO
+            //WorldHologram hologram = Holograms.create(this.world, map.teamRegions().get(gameTeam.key()).pool().centerTop().add(0.0D, 0.5D, 0.0D), Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
+            //hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
+            //hologram.show();
         });
     }
 
@@ -179,13 +189,13 @@ public class TowersActive {
 
         if (!hasEnded) {
             this.map.generators().forEach(generator -> generator.tick(world, this.gameTick));
-            this.teamMap.keySet().forEach(team -> {
-                TeamData teamData = this.teamMap.get(team);
-                BlockBounds pool = this.map.teamRegions().get(team.key()).pool();
+            this.teamMap.keySet().forEach(teamKey -> {
+                TeamData teamData = this.teamMap.get(teamKey);
+                BlockBounds pool = this.map.teamRegions().get(teamKey).pool();
                 if (this.gameTick % 60 == 0) {
                     pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
                 }
-                this.teamManager.playersIn(team.key()).forEach(player -> {
+                this.teamManager.playersIn(teamKey).forEach(player -> {
                     TowersParticipant participant = this.participantMap.get(player);
                     if (player != null) {
                         if (participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
@@ -204,20 +214,22 @@ public class TowersActive {
                         }
 
                         // Check for players in pools.
-                        this.teamMap.keySet().forEach(enemyTeam -> {
-                            TeamData enemyTeamData = this.teamMap.get(enemyTeam);
-                            if (team != enemyTeam && enemyTeamData.health > 0) {
-                                TeamRegion enemyRegion = this.map.teamRegions().get(enemyTeam.key());
+                        this.teamMap.keySet().forEach(enemyTeamKey -> {
+                            TeamData enemyTeamData = this.teamMap.get(enemyTeamKey);
+                            if (teamKey != enemyTeamKey && enemyTeamData.health > 0) {
+                                TeamRegion enemyRegion = this.map.teamRegions().get(enemyTeamKey);
                                 if (enemyRegion.pool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
                                     // The player is in an enemy's pool. They make them lose a point and steal them if the configuration allows it.
                                     this.spawnPlayerAtTheirSpawn(player);
                                     enemyTeamData.health--;
                                     if (this.config.healthStealth()) {
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), enemyTeam.config().name()));
+                                        var config = this.teamManager.getTeamConfig(teamKey);
+                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), config.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                         teamData.health++;
                                     } else {
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), enemyTeam.config().name()));
+                                        var config = this.teamManager.getTeamConfig(teamKey);
+                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), config.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                     }
                                     this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_BLAZE_HURT);
@@ -229,7 +241,7 @@ public class TowersActive {
                 });
             });
             if (this.gameTick % 20 == 0) {
-                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamMap);
+                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
             }
         }
 
@@ -247,25 +259,27 @@ public class TowersActive {
             this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
             this.hasEnded = true;
         }
-        this.teamMap.forEach((team, teamData) -> {
+        this.teamMap.forEach((teamKey, teamData) -> {
             if (teamData.health == 0) {
                 // The selected team has not enough health to be alive. They are eliminated.
                 teamData.health = -1;
-                this.teamManager.playersIn(team.key()).forEach(player -> {
+                this.teamManager.playersIn(teamKey).forEach(player -> {
                     if (player != null) {
                         player.changeGameMode(GameMode.SPECTATOR);
                         this.resetPlayer(player);
                     }
                 });
-                Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", team.config().name()));
+                var config = this.teamManager.getTeamConfig(teamKey);
+                Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", config.name()));
                 this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
                 this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
             }
         });
-        this.teamMap.forEach((gameTeam, team) -> {
+        this.teamMap.forEach((teamKey, team) -> {
             if (aliveCount == 1 && team.health > 0) {
                 // The selected team is the only team left that is alive. They win.
-                Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", gameTeam.config().name()));
+                var config = this.teamManager.getTeamConfig(teamKey);
+                Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", config.name()));
                 this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
                 this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
                 this.hasEnded = true;
@@ -276,30 +290,39 @@ public class TowersActive {
         if (this.hasEnded) {
             this.gameCloseTick = world.getTime() + 600;
             this.participantMap.keySet().forEach(player -> {
-                player.changeGameMode(GameMode.SPECTATOR);
-                this.resetPlayer(player);
-                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamMap);
+                if(this.gameSpace.getPlayers().contains(player)) {
+                    player.changeGameMode(GameMode.SPECTATOR);
+                    this.resetPlayer(player);
+                    this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
+                }
             });
         }
     }
 
     // GENERAL PLAYER MANAGEMENT
-    private PlayerOfferResult offerPlayer(PlayerOffer offer) {
-        ServerPlayerEntity player = offer.player();
-
-        GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
-        if (gameTeamKey != null) {
-            TeamData theTowersTeam = teamMap.get(gameTeamKey);
-            if (theTowersTeam.health > 0) {
-                return offer.accept(this.world, this.map.teamRegions().get(gameTeamKey).spawn().center()).and(() -> {
+    private JoinAcceptorResult accept(JoinAcceptor acceptor) {
+        return acceptor.teleport(profile -> {
+            GameTeamKey gameTeamKey = this.teamManager.teamFor(PlayerRef.of(profile));
+            if (gameTeamKey instanceof GameTeamKey) {
+                return new PlayerPos(this.world, this.map.teamRegions().get(gameTeamKey).spawn().center(), 0.0f, 0.0f);
+            }
+            return new PlayerPos(this.world, this.map.spawn(), 0.0f, 0.0f);
+        }).thenRunForEach(player -> {
+            GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
+            if (gameTeamKey instanceof GameTeamKey) {
+                GameTeam gameTeam = this.config.teamConfig().byKey(this.teamManager.teamFor(player));
+                TeamData theTowersTeam = teamMap.get(gameTeam);
+                TheTowers.LOGGER.info(gameTeam);
+                TheTowers.LOGGER.info(teamMap);
+                TheTowers.LOGGER.info(theTowersTeam);
+                if (theTowersTeam instanceof TeamData && theTowersTeam.health > 0) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);
                     this.resetPlayerInventory(player);
                     this.spawnPlayerAtTheirSpawn(player);
-                });
+                    return;
+                }
             }
-        }
-        return offer.accept(this.world, this.map.spawn()).and(() -> {
             player.changeGameMode(GameMode.SPECTATOR);
             this.resetPlayer(player);
             this.spawnPlayerAtCenter(player);
@@ -311,7 +334,7 @@ public class TowersActive {
         if (gameTeam != null) {
             player.equipStack(EquipmentSlot.HEAD, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_HELMET))).setUnbreakable().build());
             player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_CHESTPLATE))).setUnbreakable().build());
-            player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_LEGGINGS))).addEnchantment(Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
+            player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_LEGGINGS))).addEnchantment(this.world, Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
             player.equipStack(EquipmentSlot.FEET, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_BOOTS))).setUnbreakable().build());
             player.getInventory().insertStack(ItemStackBuilder.of(Items.WOODEN_SWORD).build());
             player.getInventory().insertStack(ItemStackBuilder.of(Items.WOODEN_PICKAXE).build());
@@ -346,24 +369,27 @@ public class TowersActive {
     }
 
     public void spawnPlayerAt(ServerPlayerEntity player, Vec3d pos, float yaw, float pitch) {
-        player.teleport(this.world, pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
+        player.teleport(this.world, pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, pitch, false);
         player.setVelocity(Vec3d.ZERO);
         player.fallDistance = 0.0f;
     }
 
     // GENERAL LISTENERS
-    private ActionResult dropItem(PlayerEntity player, int i, ItemStack stack) {
+    private EventResult dropItem(PlayerEntity player, int i, ItemStack stack) {
         if (canStackBeDropped(stack)) {
-            return ActionResult.SUCCESS;
+            return EventResult.ALLOW;
         } else {
             Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_drop_armor"));
             player.sendMessage(msg, false);
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
     }
 
-    private ActionResult killPlayer(ServerPlayerEntity player, DamageSource source) {
+    private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
         TowersParticipant participant = this.participantMap.get(player);
+        if(!this.gameSpace.getPlayers().contains(player)) {
+            return EventResult.PASS;
+        }
         if (participant == null) {
             this.spawnPlayerAtCenter(player);
         } else {
@@ -380,35 +406,35 @@ public class TowersActive {
 
             this.resetPlayer(player);
 
-            player.teleport(player.getX(), player.getY() + 1000, player.getZ());
-            player.networkHandler.sendPacket(new GameStateChangeS2CPacket(new GameStateChangeS2CPacket.Reason(3), 3));
+            player.teleport(player.getX(), player.getY() + 1000, player.getZ(), false);
+            player.networkHandler.sendPacket(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.GAME_MODE_CHANGED, 3));
             PlayerAbilities abilities = new PlayerAbilities();
             abilities.allowFlying = false;
             player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(abilities));
             player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, (this.config.respawnCooldown() + 1) * 20, 1, true, false));
             player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOW_FALLING, (this.config.respawnCooldown() + 1) * 20, 10, true, false));
         }
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
-    private ActionResult placeBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
+    private EventResult placeBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
                 Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
                 playerEntity.sendMessage(msg, false);
-                return ActionResult.FAIL;
+                return EventResult.DENY;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
                     playerEntity.sendMessage(msg, false);
-                    return ActionResult.FAIL;
+                    return EventResult.DENY;
                 }
             }
         }
-        return ActionResult.PASS;
+        return EventResult.PASS;
     }
 
     private ActionResult useBlock(ServerPlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult) {
@@ -421,9 +447,9 @@ public class TowersActive {
                 return ActionResult.FAIL;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
                     playerEntity.sendMessage(msg, false);
                     return ActionResult.FAIL;
@@ -433,25 +459,25 @@ public class TowersActive {
         return ActionResult.PASS;
     }
 
-    private ActionResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
+    private EventResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
                 Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
                 playerEntity.sendMessage(msg, false);
-                return ActionResult.FAIL;
+                return EventResult.DENY;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
                     playerEntity.sendMessage(msg, false);
-                    return ActionResult.FAIL;
+                    return EventResult.DENY;
                 }
             }
         }
 
-        return ActionResult.PASS;
+        return EventResult.PASS;
     }
 
     // UTILITY
@@ -464,8 +490,8 @@ public class TowersActive {
     }
 
     private void refill() {
-        for (GameTeam team : this.teamMap.keySet()) {
-            this.map.teamRegions().get(team.key()).domains().stream().iterator().forEachRemaining(aLong -> {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            this.map.teamRegions().get(teamKey).domains().stream().iterator().forEachRemaining(aLong -> {
                 BlockPos pos = BlockPos.fromLong(aLong);
                 BlockState state = this.map.template().getBlockState(pos);
 

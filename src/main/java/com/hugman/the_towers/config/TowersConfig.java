@@ -1,15 +1,17 @@
 package com.hugman.the_towers.config;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.Identifier;
-import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
-import xyz.nucleoid.plasmid.game.common.team.GameTeamList;
+import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeamList;
 
-public record TowersConfig(PlayerConfig playerConfig, GameTeamList teamConfig, Identifier mapTemplateId, int maxHealth,
+public record TowersConfig(WaitingLobbyConfig playerConfig, GameTeamList teamConfig, Identifier mapTemplateId,
+                           int maxHealth,
                            boolean healthStealth, int respawnCooldown, int refillCooldown) {
-    public static final Codec<TowersConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            PlayerConfig.CODEC.fieldOf("players").forGetter(TowersConfig::playerConfig),
+    public static final MapCodec<TowersConfig> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            WaitingLobbyConfig.CODEC.fieldOf("players").forGetter(TowersConfig::playerConfig),
             GameTeamList.CODEC.fieldOf("teams").forGetter(TowersConfig::teamConfig),
             Identifier.CODEC.fieldOf("map").forGetter(TowersConfig::mapTemplateId),
             Codec.INT.fieldOf("max_health").forGetter(TowersConfig::maxHealth),

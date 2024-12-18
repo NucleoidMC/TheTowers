@@ -11,8 +11,8 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.map_templates.TemplateRegion;
-import xyz.nucleoid.plasmid.game.GameOpenContext;
-import xyz.nucleoid.plasmid.game.GameOpenException;
+import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.GameOpenException;
 
 public record Generator(GeneratorConfig type, Vec3d pos) {
     public static final String CONFIG_KEY = "Type"; // we should use something else
