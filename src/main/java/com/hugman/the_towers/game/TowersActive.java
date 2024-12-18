@@ -120,6 +120,8 @@ public class TowersActive {
             TowersSidebar sidebar = TowersSidebar.create(widgets, gameSpace);
             TowersActive active = new TowersActive(gameSpace, activity, world, map, config, sidebar, teamSelection);
 
+            TeamChat.addTo(activity, active.teamManager);
+
             activity.allow(GameRuleType.CRAFTING);
             activity.deny(GameRuleType.PORTALS);
             activity.allow(GameRuleType.PVP);
