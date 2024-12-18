@@ -70,7 +70,7 @@ public class TowersActive {
     private final TowersMap map;
 
     private Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap;
-    private Object2ObjectMap<GameTeam, TeamData> teamMap;
+    private Object2ObjectMap<GameTeamKey, TeamData> teamMap;
     private TeamManager teamManager;
 
     private final TowersSidebar sidebar;
@@ -104,7 +104,7 @@ public class TowersActive {
                     .setCollision(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS)
                     .build());
             this.teamManager.addTeam(team);
-            this.teamMap.put(team, new TeamData(this.config.maxHealth()));
+            this.teamMap.put(team.key(), new TeamData(this.config.maxHealth()));
         }
 
         teamSelection.allocate(this.gameSpace.getPlayers(), (gameTeam, player) -> {
@@ -161,8 +161,8 @@ public class TowersActive {
         for (Text text : GUIDE_LINES) {
             this.gameSpace.getPlayers().sendMessage(text);
         }
-        this.teamMap.keySet().forEach(gameTeam -> {
-            this.teamManager.playersIn(gameTeam.key()).forEach(player -> {
+        this.teamMap.keySet().forEach(teamKey -> {
+            this.teamManager.playersIn(teamKey).forEach(player -> {
                 if (player != null) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);
@@ -189,13 +189,13 @@ public class TowersActive {
 
         if (!hasEnded) {
             this.map.generators().forEach(generator -> generator.tick(world, this.gameTick));
-            this.teamMap.keySet().forEach(team -> {
-                TeamData teamData = this.teamMap.get(team);
-                BlockBounds pool = this.map.teamRegions().get(team.key()).pool();
+            this.teamMap.keySet().forEach(teamKey -> {
+                TeamData teamData = this.teamMap.get(teamKey);
+                BlockBounds pool = this.map.teamRegions().get(teamKey).pool();
                 if (this.gameTick % 60 == 0) {
                     pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
                 }
-                this.teamManager.playersIn(team.key()).forEach(player -> {
+                this.teamManager.playersIn(teamKey).forEach(player -> {
                     TowersParticipant participant = this.participantMap.get(player);
                     if (player != null) {
                         if (participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
@@ -214,20 +214,22 @@ public class TowersActive {
                         }
 
                         // Check for players in pools.
-                        this.teamMap.keySet().forEach(enemyTeam -> {
-                            TeamData enemyTeamData = this.teamMap.get(enemyTeam);
-                            if (team != enemyTeam && enemyTeamData.health > 0) {
-                                TeamRegion enemyRegion = this.map.teamRegions().get(enemyTeam.key());
+                        this.teamMap.keySet().forEach(enemyTeamKey -> {
+                            TeamData enemyTeamData = this.teamMap.get(enemyTeamKey);
+                            if (teamKey != enemyTeamKey && enemyTeamData.health > 0) {
+                                TeamRegion enemyRegion = this.map.teamRegions().get(enemyTeamKey);
                                 if (enemyRegion.pool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
                                     // The player is in an enemy's pool. They make them lose a point and steal them if the configuration allows it.
                                     this.spawnPlayerAtTheirSpawn(player);
                                     enemyTeamData.health--;
                                     if (this.config.healthStealth()) {
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), enemyTeam.config().name()));
+                                        var config = this.teamManager.getTeamConfig(teamKey);
+                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), config.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                         teamData.health++;
                                     } else {
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), enemyTeam.config().name()));
+                                        var config = this.teamManager.getTeamConfig(teamKey);
+                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), config.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                     }
                                     this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_BLAZE_HURT);
@@ -239,7 +241,7 @@ public class TowersActive {
                 });
             });
             if (this.gameTick % 20 == 0) {
-                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamMap);
+                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
             }
         }
 
@@ -257,25 +259,27 @@ public class TowersActive {
             this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
             this.hasEnded = true;
         }
-        this.teamMap.forEach((team, teamData) -> {
+        this.teamMap.forEach((teamKey, teamData) -> {
             if (teamData.health == 0) {
                 // The selected team has not enough health to be alive. They are eliminated.
                 teamData.health = -1;
-                this.teamManager.playersIn(team.key()).forEach(player -> {
+                this.teamManager.playersIn(teamKey).forEach(player -> {
                     if (player != null) {
                         player.changeGameMode(GameMode.SPECTATOR);
                         this.resetPlayer(player);
                     }
                 });
-                Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", team.config().name()));
+                var config = this.teamManager.getTeamConfig(teamKey);
+                Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", config.name()));
                 this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
                 this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
             }
         });
-        this.teamMap.forEach((gameTeam, team) -> {
+        this.teamMap.forEach((teamKey, team) -> {
             if (aliveCount == 1 && team.health > 0) {
                 // The selected team is the only team left that is alive. They win.
-                Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", gameTeam.config().name()));
+                var config = this.teamManager.getTeamConfig(teamKey);
+                Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", config.name()));
                 this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
                 this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
                 this.hasEnded = true;
@@ -286,9 +290,11 @@ public class TowersActive {
         if (this.hasEnded) {
             this.gameCloseTick = world.getTime() + 600;
             this.participantMap.keySet().forEach(player -> {
-                player.changeGameMode(GameMode.SPECTATOR);
-                this.resetPlayer(player);
-                this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamMap);
+                if(this.gameSpace.getPlayers().contains(player)) {
+                    player.changeGameMode(GameMode.SPECTATOR);
+                    this.resetPlayer(player);
+                    this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
+                }
             });
         }
     }
@@ -304,7 +310,11 @@ public class TowersActive {
         }).thenRunForEach(player -> {
             GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
             if (gameTeamKey instanceof GameTeamKey) {
-                TeamData theTowersTeam = teamMap.get(gameTeamKey);
+                GameTeam gameTeam = this.config.teamConfig().byKey(this.teamManager.teamFor(player));
+                TeamData theTowersTeam = teamMap.get(gameTeam);
+                TheTowers.LOGGER.info(gameTeam);
+                TheTowers.LOGGER.info(teamMap);
+                TheTowers.LOGGER.info(theTowersTeam);
                 if (theTowersTeam instanceof TeamData && theTowersTeam.health > 0) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);
@@ -377,6 +387,9 @@ public class TowersActive {
 
     private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
         TowersParticipant participant = this.participantMap.get(player);
+        if(!this.gameSpace.getPlayers().contains(player)) {
+            return EventResult.PASS;
+        }
         if (participant == null) {
             this.spawnPlayerAtCenter(player);
         } else {
@@ -412,9 +425,9 @@ public class TowersActive {
                 return EventResult.DENY;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
                     playerEntity.sendMessage(msg, false);
                     return EventResult.DENY;
@@ -434,9 +447,9 @@ public class TowersActive {
                 return ActionResult.FAIL;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
                     playerEntity.sendMessage(msg, false);
                     return ActionResult.FAIL;
@@ -454,9 +467,9 @@ public class TowersActive {
                 return EventResult.DENY;
             }
         }
-        for (GameTeam team : this.teamMap.keySet()) {
-            if (team.key() != teamManager.teamFor(playerEntity)) {
-                if (this.map.teamRegions().get(team.key()).domains().contains(pos.asLong())) {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            if (teamKey != teamManager.teamFor(playerEntity)) {
+                if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
                     playerEntity.sendMessage(msg, false);
                     return EventResult.DENY;
@@ -477,8 +490,8 @@ public class TowersActive {
     }
 
     private void refill() {
-        for (GameTeam team : this.teamMap.keySet()) {
-            this.map.teamRegions().get(team.key()).domains().stream().iterator().forEachRemaining(aLong -> {
+        for (GameTeamKey teamKey : this.teamMap.keySet()) {
+            this.map.teamRegions().get(teamKey).domains().stream().iterator().forEachRemaining(aLong -> {
                 BlockPos pos = BlockPos.fromLong(aLong);
                 BlockState state = this.map.template().getBlockState(pos);
 

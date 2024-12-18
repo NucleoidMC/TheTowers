@@ -8,7 +8,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
 import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
+import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
+import xyz.nucleoid.plasmid.api.game.common.team.TeamManager;
 import xyz.nucleoid.plasmid.api.game.common.widget.SidebarWidget;
 
 public record TowersSidebar(SidebarWidget sidebarWidget) {
@@ -24,18 +25,18 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
      * @param time    the game's time in ticks
      * @param teamMap the map of team
      */
-    public void update(long time, long nextRefillTick, Object2ObjectMap<GameTeam, TeamData> teamMap) {
+    public void update(long time, long nextRefillTick, TeamManager teamManager, Object2ObjectMap<GameTeamKey, TeamData> teamMap) {
         sidebarWidget.set(content -> {
             content.add(Text.literal(""));
-            teamMap.forEach((gameTeam, team) -> {
+            teamMap.forEach((teamKey, team) -> {
                 MutableText text = Text.literal("");
                 if (team.health > 0) {
-                    text.append(gameTeam.config().name().copy().formatted(Formatting.BOLD))
+                    text.append(teamManager.getTeamConfig(teamKey).name().copy().formatted(Formatting.BOLD))
                             .append(Text.literal(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
                             .append(Text.literal(String.valueOf(team.health)).formatted(Formatting.WHITE))
                             .append(Text.literal(FormattingUtil.HEALTH_SYMBOL).formatted(Formatting.GREEN));
                 } else {
-                    text.append(gameTeam.config().name().copy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
+                    text.append(teamManager.getTeamConfig(teamKey).name().copy().formatted(Formatting.DARK_GRAY, Formatting.BOLD))
                             .append(Text.literal(" " + FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY))
                             .append(Text.literal(FormattingUtil.X_SYMBOL).formatted(Formatting.DARK_GRAY));
                 }
