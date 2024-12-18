@@ -1,5 +1,6 @@
 package com.hugman.the_towers.game;
 
+import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TowersConfig;
 import com.hugman.the_towers.map.TeamRegion;
 import com.hugman.the_towers.map.TowersMap;

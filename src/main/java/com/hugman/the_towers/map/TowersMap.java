@@ -19,9 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record TowersMap(MapTemplate template, Vec3d spawn, Vec3d rules, List<BlockBounds> protectedBounds,
-                        List<Generator> generators, Map<GameTeamKey, TeamRegion> teamRegions,
-                        RuntimeWorldConfig worldConfig) {
+public record TowersMap(
+        MapTemplate template,
+        Vec3d spawn,
+        Vec3d rules,
+        List<BlockBounds> protectedBounds,
+        List<Generator> generators,
+        Map<GameTeamKey, TeamRegion> teamRegions,
+        RuntimeWorldConfig worldConfig
+) {
     /**
      * Creates the map from a map template by reading its metadata.
      */

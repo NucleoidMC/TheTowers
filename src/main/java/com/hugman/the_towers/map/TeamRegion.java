@@ -1,5 +1,6 @@
 package com.hugman.the_towers.map;
 
+import com.hugman.the_towers.TheTowers;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.text.Text;
@@ -28,7 +29,7 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
             BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();
 
             LongSet domains = new LongArraySet();
-            metadata.getRegionBounds(teamKey + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
+            metadata.getRegionBounds(teamKey.id() + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
 
             return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
         } catch (NullPointerException e) {
