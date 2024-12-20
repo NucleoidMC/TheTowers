@@ -1,7 +1,6 @@
 {
 	"stack": {
-		"id": "minecraft:iron_ingot",
-		"Count": 1
+		"id": "minecraft:iron_ingot"
 	},
 	"interval": 600
 }
