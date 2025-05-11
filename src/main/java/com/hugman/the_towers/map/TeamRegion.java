@@ -22,8 +22,8 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
         try {
             TemplateRegion spawnRegion = metadata.getFirstRegion(teamKey.id() + "_spawn");
             BlockBounds spawn = Objects.requireNonNull(spawnRegion).getBounds();
-            float spawnYaw = spawnRegion.getData().getFloat("Yaw");
-            float spawnPitch = spawnRegion.getData().getFloat("Pitch");
+            float spawnYaw = spawnRegion.getData().getFloat("Yaw", 0);
+            float spawnPitch = spawnRegion.getData().getFloat("Pitch", 0);
 
             TemplateRegion poolRegion = metadata.getFirstRegion(teamKey.id() + "_pool");
             BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();
