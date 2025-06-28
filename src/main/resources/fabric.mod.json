@@ -12,7 +12,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.hugman.the_towers.TheTowers"
+      "fr.hugman.the_towers.TheTowers"
     ]
   },
   "depends": {
