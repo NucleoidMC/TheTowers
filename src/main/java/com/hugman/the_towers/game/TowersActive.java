@@ -489,6 +489,7 @@ public class TowersActive {
         return true;
     }
 
+    /*
     private void refill() {
         for (GameTeamKey teamKey : this.teamMap.keySet()) {
             this.map.teamRegions().get(teamKey).domains().stream().iterator().forEachRemaining(aLong -> {
@@ -503,4 +504,5 @@ public class TowersActive {
             });
         }
     }
+     */
 }

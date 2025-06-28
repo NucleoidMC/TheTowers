@@ -1,8 +1,12 @@
 package com.hugman.the_towers;
 
+import com.google.common.reflect.Reflection;
+import com.hugman.plasmid.api.game_map.GameMapType;
+import com.hugman.plasmid.api.registry.PlasmidRegistries;
+import com.hugman.plasmid.api.registry.PlasmidRegistryKeys;
 import com.hugman.the_towers.config.TowersConfig;
 import com.hugman.the_towers.game.TowersWaiting;
-import com.hugman.the_towers.registry.TheTowersRegistries;
+import com.hugman.the_towers.registry.TheTowersRegistryKeys;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +23,10 @@ public class TheTowers implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        TheTowersRegistries.register();
+        Reflection.initialize(PlasmidRegistries.class);
+        PlasmidRegistryKeys.register();
+        Reflection.initialize(GameMapType.class);
+        TheTowersRegistryKeys.register();
         GameType.register(TheTowers.id("standard"), TowersConfig.CODEC, TowersWaiting::open);
     }
 }

@@ -2,16 +2,17 @@ package com.hugman.the_towers.map;
 
 import com.hugman.the_towers.TheTowers;
 import com.hugman.the_towers.config.TowersConfig;
+import com.hugman.plasmid.api.game_map.GameMapLoadResult;
+import com.hugman.the_towers.map.generator.Generator;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
-import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.GameOpenException;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
-import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public record TowersMap(
-        MapTemplate template,
         Vec3d spawn,
         Vec3d rules,
         List<BlockBounds> protectedBounds,
@@ -31,10 +31,10 @@ public record TowersMap(
     /**
      * Creates the map from a map template by reading its metadata.
      */
-    public static TowersMap fromTemplate(GameOpenContext<TowersConfig> context, MapTemplate template) {
+    public static TowersMap build(GameOpenContext<TowersConfig> context, GameMapLoadResult result) throws GameOpenException {
         var config = context.config();
 
-        MapTemplateMetadata metadata = template.getMetadata();
+        MapTemplateMetadata metadata = result.templateMetadata().orElseThrow();
         Vec3d spawn = new Vec3d(0, 50, 0);
         BlockBounds spawnBounds = metadata.getFirstRegionBounds("spawn");
         if (spawnBounds != null) {
@@ -63,8 +63,8 @@ public record TowersMap(
             teamRegions.put(team.key(), region);
         }
 
-        var worldConfig = new RuntimeWorldConfig().setGenerator(new TemplateChunkGenerator(context.server(), template));
+        var worldConfig = new RuntimeWorldConfig().setGenerator(result.chunkGenerator(context.server()));
 
-        return new TowersMap(template, spawn, rules, protectedBounds, generators, teamRegions, worldConfig);
+        return new TowersMap(spawn, rules, protectedBounds, generators, teamRegions, worldConfig);
     }
 }

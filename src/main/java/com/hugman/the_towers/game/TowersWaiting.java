@@ -2,7 +2,6 @@ package com.hugman.the_towers.game;
 
 import com.hugman.the_towers.config.TowersConfig;
 import com.hugman.the_towers.map.TowersMap;
-import com.hugman.the_towers.map.TowersMapGenerator;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -11,10 +10,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.api.game.GameOpenContext;
-import xyz.nucleoid.plasmid.api.game.GameOpenProcedure;
-import xyz.nucleoid.plasmid.api.game.GameResult;
-import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.*;
 import xyz.nucleoid.plasmid.api.game.common.GameWaitingLobby;
 import xyz.nucleoid.plasmid.api.game.common.team.TeamSelectionLobby;
 import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
@@ -32,7 +28,12 @@ import java.util.Set;
 public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config,
                             TeamSelectionLobby teamSelection) {
     public static GameOpenProcedure open(GameOpenContext<TowersConfig> context) {
-        TowersMap map = TowersMapGenerator.loadFromConfig(context);
+        var mapLoadResult = context.config().map().value().load(context);
+        if (null == mapLoadResult) {
+            throw new GameOpenException(Text.literal("Failed to load map"));
+        }
+
+        TowersMap map = TowersMap.build(context, mapLoadResult);
         return context.openWithWorld(map.worldConfig(), (activity, world) -> {
 
             TowersConfig config = context.config();
@@ -57,7 +58,7 @@ public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap ma
 
     private void enable() {
         var gameName = this.gameSpace.getMetadata().sourceConfig().value().name();
-        if(gameName == null) gameName = Text.of("The Towers");
+        if (gameName == null) gameName = Text.of("The Towers");
         Text[] GUIDE_LINES = {
                 gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD),
                 Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),

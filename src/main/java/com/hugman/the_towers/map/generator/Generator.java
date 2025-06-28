@@ -1,4 +1,4 @@
-package com.hugman.the_towers.map;
+package com.hugman.the_towers.map.generator;
 
 import com.hugman.the_towers.config.TowersConfig;
 import net.minecraft.entity.ItemEntity;

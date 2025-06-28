@@ -1,6 +1,5 @@
 package com.hugman.the_towers.map;
 
-import com.hugman.the_towers.TheTowers;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.text.Text;
