@@ -35,6 +35,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import xyz.nucleoid.map_templates.BlockBounds;
@@ -198,6 +199,7 @@ public class TowersActive {
                 this.teamManager.playersIn(teamKey).forEach(player -> {
                     TowersParticipant participant = this.participantMap.get(player);
                     if (player != null) {
+                        // death + respawn
                         if (participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
                             if ((participant.ticksUntilRespawn + 1) % 20 == 0) {
                                 player.networkHandler.sendPacket(new TitleFadeS2CPacket(0, 90, 0));
@@ -393,6 +395,9 @@ public class TowersActive {
         if (participant == null) {
             this.spawnPlayerAtCenter(player);
         } else {
+            if(participant.isDead()) {
+                return EventResult.DENY;
+            }
             participant.ticksUntilRespawn = this.config.respawnCooldown() * 20L;
             player.changeGameMode(GameMode.SPECTATOR);
             for (int i = 0; i < player.getInventory().size(); ++i) {
@@ -405,8 +410,8 @@ public class TowersActive {
             this.gameSpace.getPlayers().sendMessage(msg);
 
             this.resetPlayer(player);
+            this.spawnPlayerAt(player, player.getPos().withAxis(Direction.Axis.Y, 1000), 0.0F, 0.0F);
 
-            player.teleport(player.getX(), player.getY() + 1000, player.getZ(), false);
             player.networkHandler.sendPacket(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.GAME_MODE_CHANGED, 3));
             PlayerAbilities abilities = new PlayerAbilities();
             abilities.allowFlying = false;
