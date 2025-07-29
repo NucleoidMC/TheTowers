@@ -1,9 +1,9 @@
 package fr.hugman.the_towers.map;
 
+import fr.hugman.plasmid.api.game_map.GameMapLoadResult;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.config.TowersConfig;
-import fr.hugman.plasmid.api.game_map.GameMapLoadResult;
-import fr.hugman.the_towers.map.generator.Generator;
+import fr.hugman.the_towers.map.generator.ItemGenerator;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
@@ -24,7 +24,7 @@ public record TowersMap(
         Vec3d spawn,
         Vec3d rules,
         List<BlockBounds> protectedBounds,
-        List<Generator> generators,
+        List<ItemGenerator> itemGenerators,
         Map<GameTeamKey, TeamRegion> teamRegions,
         RuntimeWorldConfig worldConfig
 ) {
@@ -51,11 +51,11 @@ public record TowersMap(
         }
 
         List<BlockBounds> protectedBounds = metadata.getRegionBounds("protected").collect(Collectors.toList());
-        List<Generator> generators = new ArrayList<>();
+        List<ItemGenerator> itemGenerators = new ArrayList<>();
         Map<GameTeamKey, TeamRegion> teamRegions = new HashMap<>();
 
         for (TemplateRegion region : metadata.getRegions("generator").toList()) {
-            generators.add(Generator.fromTemplate(context, region));
+            itemGenerators.add(ItemGenerator.fromTemplate(context, region));
         }
 
         for (GameTeam team : config.teamConfig()) {
@@ -65,6 +65,6 @@ public record TowersMap(
 
         var worldConfig = new RuntimeWorldConfig().setGenerator(result.chunkGenerator(context.server()));
 
-        return new TowersMap(spawn, rules, protectedBounds, generators, teamRegions, worldConfig);
+        return new TowersMap(spawn, rules, protectedBounds, itemGenerators, teamRegions, worldConfig);
     }
 }

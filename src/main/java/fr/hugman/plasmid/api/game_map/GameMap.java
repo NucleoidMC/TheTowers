@@ -1,13 +1,15 @@
 package fr.hugman.plasmid.api.game_map;
 
+import com.mojang.serialization.Codec;
 import fr.hugman.plasmid.api.registry.PlasmidRegistries;
 import fr.hugman.plasmid.api.registry.PlasmidRegistryKeys;
-import com.mojang.serialization.Codec;
 import net.minecraft.registry.RegistryCodecs;
 import net.minecraft.registry.entry.RegistryElementCodec;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+
+import java.util.Optional;
 
 public interface GameMap {
     Codec<GameMap> TYPE_CODEC = PlasmidRegistries.GAME_MAP_TYPE.getCodec().dispatch(GameMap::getType, GameMapType::codec);
@@ -18,4 +20,6 @@ public interface GameMap {
     GameMapLoadResult load(GameOpenContext<?> context);
 
     GameMapType<?> getType();
+
+    Optional<GameMapMetadata> getMetadata();
 }

@@ -1,7 +1,7 @@
 package fr.hugman.plasmid.api.game_map;
 
-import fr.hugman.plasmid.api.registry.PlasmidRegistries;
 import com.mojang.serialization.MapCodec;
+import fr.hugman.plasmid.api.registry.PlasmidRegistries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 import xyz.nucleoid.plasmid.impl.Plasmid;

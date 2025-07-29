@@ -14,7 +14,7 @@ import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
 
-public record Generator(GeneratorConfig type, Vec3d pos) {
+public record ItemGenerator(ItemGeneratorConfig type, Vec3d pos) {
     public static final String CONFIG_KEY = "Type"; // we should use something else
 
     /**
@@ -22,14 +22,14 @@ public record Generator(GeneratorConfig type, Vec3d pos) {
      *
      * @param region the region of the generator
      */
-    public static Generator fromTemplate(GameOpenContext<TowersConfig> context, TemplateRegion region) {
+    public static ItemGenerator fromTemplate(GameOpenContext<TowersConfig> context, TemplateRegion region) {
         var data = region.getData();
         if (!data.contains(CONFIG_KEY)) {
             throw new GameOpenException(Text.translatable("error.the_towers.generator.empty_config"));
         }
 
         var ops = RegistryOps.of(NbtOps.INSTANCE, context.server().getRegistryManager());
-        var result = GeneratorConfig.REGISTRY_CODEC.parse(ops, data.get(CONFIG_KEY));
+        var result = ItemGeneratorConfig.REGISTRY_CODEC.parse(ops, data.get(CONFIG_KEY));
 
         if (result.error().isPresent()) {
             throw new GameOpenException(Text.translatable("error.the_towers.generator.invalid_config"), new IllegalArgumentException(result.error().get().toString()));
@@ -37,7 +37,7 @@ public record Generator(GeneratorConfig type, Vec3d pos) {
 
         return result.result().map(entry -> {
             Vec3d vec3d = region.getBounds().center();
-            return new Generator(entry.value(), vec3d);
+            return new ItemGenerator(entry.value(), vec3d);
         }).orElseThrow(() -> result.error().map(error -> new GameOpenException(Text.of(error.toString()))).orElse(new GameOpenException(Text.literal("Failed to decode The Towers generator config"))));
     }
 

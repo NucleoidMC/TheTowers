@@ -33,6 +33,14 @@ processResources {
     }
 }
 
+fabricApi {
+    configureDataGeneration() {
+        modId = "the_towers-datagen"
+        createSourceSet = true
+        client = true
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     it.options.release = 21
@@ -44,6 +52,6 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}"}
+        rename { "${it}_${project.archivesBaseName}" }
     }
 }

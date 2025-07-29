@@ -7,7 +7,8 @@ public class TowersParticipant {
     // if it is == 0, the participant is alive and should respawn immediately
     public long ticksUntilRespawn;
 
-    TowersParticipant() {}
+    TowersParticipant() {
+    }
 
     public boolean isDead() {
         return ticksUntilRespawn > 0;

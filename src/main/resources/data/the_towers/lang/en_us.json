@@ -1,7 +1,9 @@
 {
+	"game.generic.mode": "%s - %s",
+
 	"game.the_towers": "The Towers",
-	"game.the_towers.classic.two_teams": "The Towers: Classic (2 Teams)",
-	"game.the_towers.classic.four_teams": "The Towers: Classic (4 Teams)",
+	"game_map.the_towers.classic.two_teams": "Classic (2 Teams)",
+	"game_map.the_towers.classic.four_teams": "Classic (4 Teams)",
 
 	"text.the_towers.cannot_break": "You cannot break this block!",
 	"text.the_towers.cannot_drop_armor": "You cannot drop your team's armor!",

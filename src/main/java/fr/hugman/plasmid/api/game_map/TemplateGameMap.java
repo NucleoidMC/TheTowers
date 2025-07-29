@@ -10,14 +10,27 @@ import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
 import java.io.IOException;
 import java.util.Optional;
 
-public record TemplateGameMap(Identifier id) implements GameMap {
+public record TemplateGameMap(
+        Optional<GameMapMetadata> metadata,
+        Identifier id
+) implements GameMap {
     public static final MapCodec<TemplateGameMap> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            GameMapMetadata.CODEC.optionalFieldOf("metadata").forGetter(TemplateGameMap::metadata),
             Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id)
     ).apply(instance, TemplateGameMap::new));
+
+    public TemplateGameMap(GameMapMetadata metadata, Identifier id) {
+        this(Optional.of(metadata), id);
+    }
 
     @Override
     public GameMapType<?> getType() {
         return GameMapType.TEMPLATE;
+    }
+
+    @Override
+    public Optional<GameMapMetadata> getMetadata() {
+        return this.metadata;
     }
 
     @Override

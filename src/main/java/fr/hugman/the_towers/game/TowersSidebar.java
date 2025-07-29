@@ -15,7 +15,7 @@ import xyz.nucleoid.plasmid.api.game.common.widget.SidebarWidget;
 public record TowersSidebar(SidebarWidget sidebarWidget) {
     public static TowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
         var gameName = gameSpace.getMetadata().sourceConfig().value().name();
-        if(gameName == null) gameName = Text.of("The Towers");
+        if (gameName == null) gameName = Text.of("The Towers");
         return new TowersSidebar(widgets.addSidebar(gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD)));
     }
 

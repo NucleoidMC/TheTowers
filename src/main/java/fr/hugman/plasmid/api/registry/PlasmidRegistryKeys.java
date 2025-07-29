@@ -6,9 +6,12 @@ import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
+import xyz.nucleoid.plasmid.api.game.config.GameConfig;
+import xyz.nucleoid.plasmid.api.game.config.GameConfigs;
 import xyz.nucleoid.plasmid.impl.Plasmid;
 
 public class PlasmidRegistryKeys {
+    public static final RegistryKey<Registry<GameConfig<?>>> GAME_CONFIG = GameConfigs.REGISTRY_KEY;
     public static final RegistryKey<Registry<GameMap>> GAME_MAP = RegistryKey.ofRegistry(Identifier.of(Plasmid.ID, "game_map"));
     public static final RegistryKey<Registry<GameMapType<?>>> GAME_MAP_TYPE = RegistryKey.ofRegistry(Identifier.of(Plasmid.ID, "game_map_type"));
 

@@ -1,15 +1,19 @@
 package fr.hugman.plasmid.api.game_map;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import fr.hugman.plasmid.api.author.Author;
+
+import java.util.List;
 
 public record GameMapMetadata(
-        String author,
-        String description
+        List<Author> authors
 ) {
-    public static final MapCodec<GameMapMetadata> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.STRING.fieldOf("author").forGetter(GameMapMetadata::author),
-            Codec.STRING.fieldOf("description").forGetter(GameMapMetadata::description)
+    public static final Codec<GameMapMetadata> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Author.CODEC.listOf().fieldOf("authors").forGetter(GameMapMetadata::authors)
     ).apply(instance, GameMapMetadata::new));
+
+    public GameMapMetadata(Author... authors) {
+        this(List.of(authors));
+    }
 }

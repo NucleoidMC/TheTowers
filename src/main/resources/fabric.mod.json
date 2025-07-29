@@ -8,6 +8,11 @@
   "authors": [
     "Hugman"
   ],
+  "contact": {
+    "homepage": "https://nucleoid.xyz/",
+    "sources": "https://github.com/NucleoidMC/TheTowers",
+    "issues": "https://github.com/NucleoidMC/TheTowers/issues"
+  },
   "license": "LGPL-3.0-or-later",
   "environment": "*",
   "entrypoints": {
@@ -17,7 +22,7 @@
   },
   "depends": {
     "java": ">=21",
-    "minecraft": ">=1.21",
+    "minecraft": ">=1.21.4",
     "fabricloader": ">=0.9.1",
     "fabric-api": ">=0.86.1",
     "plasmid": "0.6.x"

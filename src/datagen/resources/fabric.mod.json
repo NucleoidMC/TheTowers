@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "The Towers Data Generation",
+  "id": "the_towers-datagen",
+  "version": "1.0.0",
+  "authors": [
+    "Hugman"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "fr.hugman.the_towers.impl.data.TheTowersDataGenerator"
+    ]
+  }
+}

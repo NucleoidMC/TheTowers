@@ -150,7 +150,7 @@ public class TowersActive {
     private void enable() {
         this.nextRefillTick = this.gameTick + this.config.refillCooldown();
 
-        Text[] GUIDE_LINES = {
+        Text[] guideLines = {
                 Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
                 this.gameSpace.getMetadata().sourceConfig().value().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
                 Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
@@ -159,7 +159,7 @@ public class TowersActive {
                 Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
         };
 
-        for (Text text : GUIDE_LINES) {
+        for (Text text : guideLines) {
             this.gameSpace.getPlayers().sendMessage(text);
         }
         this.teamMap.keySet().forEach(teamKey -> {
@@ -189,7 +189,7 @@ public class TowersActive {
         }
 
         if (!hasEnded) {
-            this.map.generators().forEach(generator -> generator.tick(world, this.gameTick));
+            this.map.itemGenerators().forEach(generator -> generator.tick(world, this.gameTick));
             this.teamMap.keySet().forEach(teamKey -> {
                 TeamData teamData = this.teamMap.get(teamKey);
                 BlockBounds pool = this.map.teamRegions().get(teamKey).pool();
@@ -292,7 +292,7 @@ public class TowersActive {
         if (this.hasEnded) {
             this.gameCloseTick = world.getTime() + 600;
             this.participantMap.keySet().forEach(player -> {
-                if(this.gameSpace.getPlayers().contains(player)) {
+                if (this.gameSpace.getPlayers().contains(player)) {
                     player.changeGameMode(GameMode.SPECTATOR);
                     this.resetPlayer(player);
                     this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
@@ -389,13 +389,13 @@ public class TowersActive {
 
     private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
         TowersParticipant participant = this.participantMap.get(player);
-        if(!this.gameSpace.getPlayers().contains(player)) {
+        if (!this.gameSpace.getPlayers().contains(player)) {
             return EventResult.PASS;
         }
         if (participant == null) {
             this.spawnPlayerAtCenter(player);
         } else {
-            if(participant.isDead()) {
+            if (participant.isDead()) {
                 return EventResult.DENY;
             }
             participant.ticksUntilRespawn = this.config.respawnCooldown() * 20L;
