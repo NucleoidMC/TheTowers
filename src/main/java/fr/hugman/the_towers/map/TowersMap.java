@@ -1,23 +1,24 @@
 package fr.hugman.the_towers.map;
 
+import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.plasmid.api.game_map.GameMapLoadResult;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.generator.ItemGenerator;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
+import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public record TowersMap(
@@ -31,9 +32,7 @@ public record TowersMap(
     /**
      * Creates the map from a map template by reading its metadata.
      */
-    public static TowersMap build(GameOpenContext<TowersConfig> context, GameMapLoadResult result) throws GameOpenException {
-        var config = context.config();
-
+    public static TowersMap build(GameActivity activity, GameMapLoadResult result) throws GameOpenException {
         MapTemplateMetadata metadata = result.templateMetadata().orElseThrow();
         Vec3d spawn = new Vec3d(0, 50, 0);
         BlockBounds spawnBounds = metadata.getFirstRegionBounds("spawn");
@@ -55,15 +54,22 @@ public record TowersMap(
         Map<GameTeamKey, TeamRegion> teamRegions = new HashMap<>();
 
         for (TemplateRegion region : metadata.getRegions("generator").toList()) {
-            itemGenerators.add(ItemGenerator.fromTemplate(context, region));
+            itemGenerators.add(ItemGenerator.fromTemplate(activity, region));
         }
 
-        for (GameTeam team : config.teamConfig()) {
-            TeamRegion region = TeamRegion.fromTemplate(team.key(), metadata);
-            teamRegions.put(team.key(), region);
+        var teamlist = activity.getGameSpace().getAttachment(PlasmidGameAttachments.TEAM_LIST);
+
+        int i = 0;
+        for (GameTeam team : teamlist) {
+            try {
+                TeamRegion region = TeamRegion.fromTemplate(++i, metadata);
+                teamRegions.put(team.key(), region);
+            } catch (NullPointerException e) {
+                throw new GameOpenException(Text.translatable("error.the_towers.team_region_load", team.key(), i), e);
+            }
         }
 
-        var worldConfig = new RuntimeWorldConfig().setGenerator(result.chunkGenerator(context.server()));
+        var worldConfig = new RuntimeWorldConfig().setGenerator(result.chunkGenerator());
 
         return new TowersMap(spawn, rules, protectedBounds, itemGenerators, teamRegions, worldConfig);
     }

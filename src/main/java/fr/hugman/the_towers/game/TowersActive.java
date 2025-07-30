@@ -1,5 +1,6 @@
 package fr.hugman.the_towers.game;
 
+import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.TeamRegion;
@@ -69,6 +70,7 @@ public class TowersActive {
     private final ServerWorld world;
     private final TowersConfig config;
     private final TowersMap map;
+    private final GameTeamList teams;
 
     private Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap;
     private Object2ObjectMap<GameTeamKey, TeamData> teamMap;
@@ -87,6 +89,7 @@ public class TowersActive {
         this.world = world;
         this.config = config;
         this.map = map;
+        this.teams = gameSpace.getAttachment(PlasmidGameAttachments.TEAM_LIST);
 
         fillTeams(teamSelection);
 
@@ -99,7 +102,7 @@ public class TowersActive {
 
         this.teamManager = TeamManager.addTo(this.activity);
 
-        for (GameTeam team : this.config.teamConfig()) {
+        for (GameTeam team : this.teams) {
             team = team.withConfig(GameTeamConfig.builder(team.config())
                     .setFriendlyFire(false)
                     .setCollision(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS)
@@ -176,6 +179,7 @@ public class TowersActive {
             //hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
             //hologram.show();
         });
+        this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
     }
 
     private void tick() {
@@ -312,7 +316,7 @@ public class TowersActive {
         }).thenRunForEach(player -> {
             GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
             if (gameTeamKey instanceof GameTeamKey) {
-                GameTeam gameTeam = this.config.teamConfig().byKey(this.teamManager.teamFor(player));
+                GameTeam gameTeam = this.teams.byKey(this.teamManager.teamFor(player));
                 TeamData theTowersTeam = teamMap.get(gameTeam);
                 TheTowers.LOGGER.info(gameTeam);
                 TheTowers.LOGGER.info(teamMap);
@@ -332,7 +336,7 @@ public class TowersActive {
     }
 
     public void resetPlayerInventory(ServerPlayerEntity player) {
-        GameTeam gameTeam = this.config.teamConfig().byKey(this.teamManager.teamFor(player));
+        GameTeam gameTeam = this.teams.byKey(this.teamManager.teamFor(player));
         if (gameTeam != null) {
             player.equipStack(EquipmentSlot.HEAD, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_HELMET))).setUnbreakable().build());
             player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_CHESTPLATE))).setUnbreakable().build());

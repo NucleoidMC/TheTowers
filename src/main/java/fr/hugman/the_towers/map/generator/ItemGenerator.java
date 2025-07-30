@@ -11,6 +11,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.map_templates.TemplateRegion;
+import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
 
@@ -22,13 +23,13 @@ public record ItemGenerator(ItemGeneratorConfig type, Vec3d pos) {
      *
      * @param region the region of the generator
      */
-    public static ItemGenerator fromTemplate(GameOpenContext<TowersConfig> context, TemplateRegion region) {
+    public static ItemGenerator fromTemplate(GameActivity activity, TemplateRegion region) {
         var data = region.getData();
         if (!data.contains(CONFIG_KEY)) {
             throw new GameOpenException(Text.translatable("error.the_towers.generator.empty_config"));
         }
 
-        var ops = RegistryOps.of(NbtOps.INSTANCE, context.server().getRegistryManager());
+        var ops = RegistryOps.of(NbtOps.INSTANCE, activity.getGameSpace().getServer().getRegistryManager());
         var result = ItemGeneratorConfig.REGISTRY_CODEC.parse(ops, data.get(CONFIG_KEY));
 
         if (result.error().isPresent()) {

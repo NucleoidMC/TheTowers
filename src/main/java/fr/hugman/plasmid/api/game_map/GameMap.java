@@ -7,7 +7,7 @@ import net.minecraft.registry.RegistryCodecs;
 import net.minecraft.registry.entry.RegistryElementCodec;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
-import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.GameActivity;
 
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public interface GameMap {
     Codec<RegistryEntry<GameMap>> ENTRY_CODEC = RegistryElementCodec.of(PlasmidRegistryKeys.GAME_MAP, TYPE_CODEC);
     Codec<RegistryEntryList<GameMap>> ENTRY_LIST_CODEC = RegistryCodecs.entryList(PlasmidRegistryKeys.GAME_MAP, TYPE_CODEC);
 
-    GameMapLoadResult load(GameOpenContext<?> context);
+    <Config> GameMapLoadResult load(GameActivity activity, Config config);
 
     GameMapType<?> getType();
 

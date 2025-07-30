@@ -15,24 +15,20 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
     /**
      * Creates a team region by reading the map template's metadata. Can throw a {@link NullPointerException} if the regions are not specified in the map template.
      *
-     * @param teamKey the team's key which needs its regions to be found
+     * @throws NullPointerException
      */
-    public static TeamRegion fromTemplate(GameTeamKey teamKey, MapTemplateMetadata metadata) {
-        try {
-            TemplateRegion spawnRegion = metadata.getFirstRegion(teamKey.id() + "_spawn");
+    public static TeamRegion fromTemplate(int i, MapTemplateMetadata metadata) {
+            TemplateRegion spawnRegion = metadata.getFirstRegion(i + "_spawn");
             BlockBounds spawn = Objects.requireNonNull(spawnRegion).getBounds();
             float spawnYaw = spawnRegion.getData().getFloat("Yaw", 0);
             float spawnPitch = spawnRegion.getData().getFloat("Pitch", 0);
 
-            TemplateRegion poolRegion = metadata.getFirstRegion(teamKey.id() + "_pool");
+            TemplateRegion poolRegion = metadata.getFirstRegion(i + "_pool");
             BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();
 
             LongSet domains = new LongArraySet();
-            metadata.getRegionBounds(teamKey.id() + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
+            metadata.getRegionBounds(i + "_domain").forEach(blockPos -> blockPos.forEach(pos -> domains.add(pos.asLong())));
 
             return new TeamRegion(spawn, pool, domains, spawnYaw, spawnPitch);
-        } catch (NullPointerException e) {
-            throw new GameOpenException(Text.translatable("error.the_towers.team_region_load", teamKey.id()), e);
-        }
     }
 }

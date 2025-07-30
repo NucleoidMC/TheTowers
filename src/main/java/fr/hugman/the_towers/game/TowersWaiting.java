@@ -1,5 +1,7 @@
 package fr.hugman.the_towers.game;
 
+import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
+import fr.hugman.plasmid.api.game.team.provider.RandomTeamListProvider;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.TowersMap;
 import net.minecraft.entity.damage.DamageSource;
@@ -25,22 +27,34 @@ import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Set;
 
-public record TowersWaiting(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config,
-                            TeamSelectionLobby teamSelection) {
+public record TowersWaiting(
+        GameSpace gameSpace,
+        ServerWorld world,
+        TowersMap map,
+        TowersConfig config,
+        TeamSelectionLobby teamSelection
+) {
     public static GameOpenProcedure open(GameOpenContext<TowersConfig> context) {
-        var mapLoadResult = context.config().map().value().load(context);
-        if (null == mapLoadResult) {
-            throw new GameOpenException(Text.literal("Failed to load map"));
-        }
-
-        TowersMap map = TowersMap.build(context, mapLoadResult);
-        return context.openWithWorld(map.worldConfig(), (activity, world) -> {
-
+        return context.open((activity) -> {
             TowersConfig config = context.config();
+
+            var teams = config.teamConfig(); //TODO: add to config
+            teams = new RandomTeamListProvider(teams.list().size()).get(context.server().getOverworld().getRandom());
+
+            activity.getGameSpace().setAttachment(PlasmidGameAttachments.TEAM_LIST, teams);
+
+            var mapLoadResult = config.map().value().load(activity, config);
+            if (null == mapLoadResult) {
+                throw new GameOpenException(Text.literal("Failed to load map"));  //TODO: translate
+            }
+
+            TowersMap map = TowersMap.build(activity, mapLoadResult);
+            ServerWorld world = activity.getGameSpace().getWorlds().add(map.worldConfig());
+
             GameWaitingLobby.addTo(activity, config.playerConfig());
 
-            TeamSelectionLobby teamSelection = TeamSelectionLobby.addTo(activity, config.teamConfig());
-            TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, context.config(), teamSelection);
+            TeamSelectionLobby teamSelection = TeamSelectionLobby.addTo(activity, teams);
+            TowersWaiting waiting = new TowersWaiting(activity.getGameSpace(), world, map, config, teamSelection);
 
             activity.setRule(GameRuleType.INTERACTION, EventResult.DENY);
 

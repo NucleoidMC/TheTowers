@@ -25,5 +25,5 @@
 
 	"error.the_towers.generator.invalid_config": "Generator configuration is invalid",
 	"error.the_towers.generator.empty_config": "Generator configuration is empty",
-	"error.the_towers.team_region_load": "Failed to load %s team's region"
+	"error.the_towers.team_region_load": "Failed to load %s team's region (n°%s)"
 }

@@ -100,7 +100,7 @@ public class TheTowersGameProvider extends FabricDynamicRegistryProvider {
         return new GameTeam(
                 new GameTeamKey(name),
                 GameTeamConfig.builder()
-                        .setName(Text.translatable("color.minecraft." + dyeColor.getId()))
+                        .setName(Text.translatable("color.minecraft." + name))
                         .setColors(GameTeamConfig.Colors.from(dyeColor))
                         .build()
         );

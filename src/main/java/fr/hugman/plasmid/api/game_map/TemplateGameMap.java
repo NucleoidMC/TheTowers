@@ -2,25 +2,31 @@ package fr.hugman.plasmid.api.game_map;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import fr.hugman.plasmid.api.game_map.template.processor.MapTemplateProcessor;
+import fr.hugman.plasmid.api.game_map.template.processor.TeamColorMapTemplateProcessor;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
-import xyz.nucleoid.plasmid.api.game.GameOpenContext;
+import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 public record TemplateGameMap(
+        Identifier id,
         Optional<GameMapMetadata> metadata,
-        Identifier id
+        List<MapTemplateProcessor> processors
 ) implements GameMap {
     public static final MapCodec<TemplateGameMap> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
             GameMapMetadata.CODEC.optionalFieldOf("metadata").forGetter(TemplateGameMap::metadata),
-            Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id)
+            MapTemplateProcessor.TYPE_CODEC.listOf().optionalFieldOf("processors", List.of()).forGetter(TemplateGameMap::processors)
     ).apply(instance, TemplateGameMap::new));
 
-    public TemplateGameMap(GameMapMetadata metadata, Identifier id) {
-        this(Optional.of(metadata), id);
+    public TemplateGameMap(Identifier id, GameMapMetadata metadata, MapTemplateProcessor... processors) {
+        this(id, Optional.of(metadata), List.of(processors));
     }
 
     @Override
@@ -29,17 +35,21 @@ public record TemplateGameMap(
     }
 
     @Override
-    public Optional<GameMapMetadata> getMetadata() {
-        return this.metadata;
-    }
-
-    @Override
-    public GameMapLoadResult load(GameOpenContext<?> context) {
+    public <Config> GameMapLoadResult load(GameActivity activity, Config config) {
         try {
-            var template = MapTemplateSerializer.loadFromResource(context.server(), this.id);
-            return new GameMapLoadResult(s -> new TemplateChunkGenerator(s, template), Optional.of(template.getMetadata()));
+            var server = activity.getGameSpace().getServer();
+            var template = MapTemplateSerializer.loadFromResource(server, this.id);
+            for (var processor : this.processors) {
+                processor.processTemplate(activity, template);
+            }
+            return new GameMapLoadResult(new TemplateChunkGenerator(server, template), Optional.of(template.getMetadata()));
         } catch (IOException e) {
             return null;
         }
+    }
+
+    @Override
+    public Optional<GameMapMetadata> getMetadata() {
+        return this.metadata;
     }
 }
