@@ -1,7 +1,7 @@
 package fr.hugman.the_towers.game;
 
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
-import fr.hugman.plasmid.api.game.team.provider.RandomTeamListProvider;
+import fr.hugman.plasmid.api.game.team.provider.StandardTeamListProvider;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.TowersMap;
 import net.minecraft.entity.damage.DamageSource;
@@ -38,8 +38,7 @@ public record TowersWaiting(
         return context.open((activity) -> {
             TowersConfig config = context.config();
 
-            var teams = config.teamConfig(); //TODO: add to config
-            teams = new RandomTeamListProvider(teams.list().size()).get(context.server().getOverworld().getRandom());
+            var teams = config.teamConfig().get(context.server().getOverworld().getRandom());
 
             activity.getGameSpace().setAttachment(PlasmidGameAttachments.TEAM_LIST, teams);
 

@@ -1,5 +1,7 @@
 package fr.hugman.the_towers.game;
 
+import fr.hugman.plasmid.api.game_map.GameMapMetadata;
+import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.util.FormattingUtil;
 import fr.hugman.the_towers.util.TickUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -11,12 +13,17 @@ import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 import xyz.nucleoid.plasmid.api.game.common.team.TeamManager;
 import xyz.nucleoid.plasmid.api.game.common.widget.SidebarWidget;
+import xyz.nucleoid.plasmid.api.game.config.GameConfig;
 
-public record TowersSidebar(SidebarWidget sidebarWidget) {
+import java.util.Optional;
+
+public record TowersSidebar(SidebarWidget sidebarWidget, Optional<Text> mapName) {
     public static TowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
-        var gameName = gameSpace.getMetadata().sourceConfig().value().name();
-        if (gameName == null) gameName = Text.of("The Towers");
-        return new TowersSidebar(widgets.addSidebar(gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD)));
+        var config = gameSpace.getMetadata().sourceConfig();
+        return new TowersSidebar(
+                widgets.addSidebar(GameConfig.shortName(config).copy().formatted(Formatting.BOLD, Formatting.GOLD)),
+                ((TowersConfig) config.value().config()).map().value().getMetadata().flatMap(GameMapMetadata::name)
+        );
     }
 
     /**
@@ -42,11 +49,16 @@ public record TowersSidebar(SidebarWidget sidebarWidget) {
                 }
                 content.add(text);
             });
+            //TODO add current map
             //TODO: fix the refill method
             //content.add(Text.literal(""));
             //content.add(Text.translatable("text.the_towers.sidebar.refill_in", TickUtil.format(nextRefillTick - time).shallowCopy().formatted(Formatting.WHITE)).formatted(Formatting.GRAY));
             content.add(Text.literal(""));
             content.add(Text.literal(FormattingUtil.CLOCK_SYMBOL + " ").formatted(Formatting.GRAY).append(Text.translatable("text.the_towers.sidebar.time", TickUtil.format(time).copyContentOnly().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
+            if(mapName.isPresent()) {
+                content.add(Text.literal(""));
+                content.add(Text.literal(FormattingUtil.GENERAL_SYMBOL + " ").formatted(Formatting.GRAY).append(Text.translatable("text.the_towers.sidebar.map", mapName.get().copyContentOnly().formatted(Formatting.WHITE)).formatted(Formatting.GRAY)));
+            }
         });
     }
 }

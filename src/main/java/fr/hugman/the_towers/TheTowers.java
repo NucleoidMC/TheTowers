@@ -1,6 +1,7 @@
 package fr.hugman.the_towers;
 
 import com.google.common.reflect.Reflection;
+import fr.hugman.plasmid.api.game.team.provider.TeamListProviderType;
 import fr.hugman.plasmid.api.game_map.GameMapType;
 import fr.hugman.plasmid.api.game_map.template.processor.MapTemplateProcessorType;
 import fr.hugman.plasmid.api.registry.PlasmidRegistries;
@@ -22,11 +23,14 @@ public class TheTowers implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        TheTowersRegistryKeys.register();
+        Reflection.initialize(TheTowersGameTypes.class);
+
+        // Temporary Plasmid stuff (until PRed)
         Reflection.initialize(PlasmidRegistries.class);
         PlasmidRegistryKeys.register();
         Reflection.initialize(GameMapType.class);
         Reflection.initialize(MapTemplateProcessorType.class);
-        TheTowersRegistryKeys.register();
-        Reflection.initialize(TheTowersGameTypes.class);
+        Reflection.initialize(TeamListProviderType.class);
     }
 }

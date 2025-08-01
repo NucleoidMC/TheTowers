@@ -17,9 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public record TeamColorMapTemplateProcessor(List<DyeColor> baseColors) implements MapTemplateProcessor {
-    public static final MapCodec<TeamColorMapTemplateProcessor> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            DyeColor.CODEC.listOf().fieldOf("base_colors").forGetter(TeamColorMapTemplateProcessor::baseColors)
-    ).apply(instance, TeamColorMapTemplateProcessor::new));
+    public static final MapCodec<TeamColorMapTemplateProcessor> CODEC = DyeColor.CODEC.listOf().fieldOf("base_colors").xmap(TeamColorMapTemplateProcessor::new, TeamColorMapTemplateProcessor::baseColors);
 
     @Override
     public MapTemplateProcessorType<?> getType() {

@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider
 import net.minecraft.registry.Registerable;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 
 import java.util.Arrays;
@@ -37,15 +38,16 @@ public class TheTowersGameMapProvider extends FabricDynamicRegistryProvider {
     }
 
     public static void register(Registerable<GameMap> registerable) {
+        var classicMetadata = new GameMapMetadata(
+                Text.translatable("game_map.the_towers.classic"),
+                new Author(TheTowersUUIDs.QUIJX),
+                new Author(TheTowersUUIDs.HUGMAN)
+        );
         registerable.register(TheTowersGameMaps.CLASSIC_TWO_TEAMS, new TemplateGameMap(
-                TheTowers.id("classic/two_teams"),
-                new GameMapMetadata(new Author(TheTowersUUIDs.QUIJX)),
-                new TeamColorMapTemplateProcessor(List.of(DyeColor.BLUE, DyeColor.RED))
+                TheTowers.id("classic/two_teams"), classicMetadata, new TeamColorMapTemplateProcessor(List.of(DyeColor.BLUE, DyeColor.RED))
         ));
         registerable.register(TheTowersGameMaps.CLASSIC_FOUR_TEAMS, new TemplateGameMap(
-                TheTowers.id("classic/four_teams"),
-                new GameMapMetadata(new Author(TheTowersUUIDs.QUIJX), new Author(TheTowersUUIDs.HUGMAN)),
-                new TeamColorMapTemplateProcessor(List.of(DyeColor.BLUE, DyeColor.RED, DyeColor.LIME, DyeColor.YELLOW))
+                TheTowers.id("classic/four_teams"), classicMetadata, new TeamColorMapTemplateProcessor(List.of(DyeColor.BLUE, DyeColor.RED, DyeColor.LIME, DyeColor.YELLOW))
         ));
     }
 }

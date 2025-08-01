@@ -1,9 +1,9 @@
 {
 	"game.generic.mode": "%s - %s",
+	"game.generic.teams": "%s Teams",
 
 	"game.the_towers": "The Towers",
-	"game_map.the_towers.classic.two_teams": "Classic (2 Teams)",
-	"game_map.the_towers.classic.four_teams": "Classic (4 Teams)",
+	"game_map.the_towers.classic": "Classic",
 
 	"text.the_towers.cannot_break": "You cannot break this block!",
 	"text.the_towers.cannot_drop_armor": "You cannot drop your team's armor!",
@@ -20,6 +20,7 @@
 	"text.the_towers.sidebar.entry": "%s: %s",
 	"text.the_towers.sidebar.refill_in": "Refill in: %s",
 	"text.the_towers.sidebar.time": "Time: %s",
+	"text.the_towers.sidebar.map": "Map: %s",
 	"text.the_towers.team_eliminated": "The %s team has been eliminated!",
 	"text.the_towers.team_won": "The %s team has won!",
 
