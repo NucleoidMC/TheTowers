@@ -1,6 +1,5 @@
 package fr.hugman.the_towers.api.datagen.provider;
 
-import fr.hugman.plasmid.api.game.team.provider.StandardTeamListProvider;
 import fr.hugman.plasmid.api.game.team.provider.TeamListProvider;
 import fr.hugman.plasmid.api.game_map.GameMap;
 import fr.hugman.plasmid.api.registry.PlasmidRegistryKeys;
@@ -41,35 +40,24 @@ public class TheTowersGameProvider extends FabricDynamicRegistryProvider {
     public static void register(Registerable<GameConfig<?>> registerable) {
         var maps = registerable.getRegistryLookup(PlasmidRegistryKeys.GAME_MAP);
         var classicMapName = Text.translatable("game_map.the_towers.classic");
-        registerable.register(TheTowersGameConfigs.CLASSIC_TWO_TEAMS, create(maps.getOrThrow(TheTowersGameMaps.CLASSIC_TWO_TEAMS), classicMapName, TeamAmount.TWO));
-        registerable.register(TheTowersGameConfigs.CLASSIC_FOUR_TEAMS, create(maps.getOrThrow(TheTowersGameMaps.CLASSIC_FOUR_TEAMS), classicMapName, TeamAmount.FOUR));
+        registerable.register(TheTowersGameConfigs.CLASSIC_TWO_TEAMS, create(maps.getOrThrow(TheTowersGameMaps.CLASSIC_TWO_TEAMS), classicMapName, 2));
+        registerable.register(TheTowersGameConfigs.CLASSIC_FOUR_TEAMS, create(maps.getOrThrow(TheTowersGameMaps.CLASSIC_FOUR_TEAMS), classicMapName, 4));
     }
 
-    private static GameConfig<?> create(RegistryEntry<GameMap> map, Text mapName, TeamAmount teamAmount) {
+    private static GameConfig<?> create(RegistryEntry<GameMap> map, Text mapName, int teamAmount) {
         return new GameConfig<>(
                 TheTowersGameTypes.STANDARD,
                 Text.translatable("game.generic.mode", Text.translatable("game.the_towers"),
                         mapName.copy()
-                                .append(Text.literal(" (").append(Text.translatable("game.generic.teams", teamAmount.amount)).append(")"))),
+                                .append(" (")
+                                .append(Text.translatable("game.generic.teams", teamAmount))
+                                .append(")")),
                 Text.translatable("game.the_towers"),
                 null, new ItemStack(Items.GRASS_BLOCK), CustomValuesConfig.empty(),
                 new TowersConfig(
-                        new WaitingLobbyConfig(new PlayerLimiterConfig(teamAmount.amount * 8), 1, teamAmount.amount * 4, WaitingLobbyConfig.Countdown.DEFAULT),
-                        TeamListProvider.of(teamAmount.amount), map, 20 / teamAmount.amount
+                        new WaitingLobbyConfig(new PlayerLimiterConfig(teamAmount * 8), 1, teamAmount * 4, WaitingLobbyConfig.Countdown.DEFAULT),
+                        TeamListProvider.of(teamAmount), map, 20 / teamAmount
                 )
         );
-    }
-
-    private enum TeamAmount {
-        TWO(2, "two"),
-        FOUR(4, "four");
-
-        private final int amount;
-        private final String name;
-
-        TeamAmount(int amount, String name) {
-            this.amount = amount;
-            this.name = name;
-        }
     }
 }

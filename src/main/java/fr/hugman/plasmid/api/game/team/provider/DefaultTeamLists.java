@@ -1,23 +1,25 @@
 package fr.hugman.plasmid.api.game.team.provider;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.DyeColor;
-import net.minecraft.util.math.intprovider.ConstantIntProvider;
-import net.minecraft.util.math.intprovider.IntProvider;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamConfig;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
-import xyz.nucleoid.plasmid.api.game.common.team.GameTeamList;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
-public final class StandardTeamListProvider extends TeamListProvider {
-    public static final MapCodec<StandardTeamListProvider> CODEC = IntProvider.createValidatingCodec(1, 16).fieldOf("size").xmap(StandardTeamListProvider::new, StandardTeamListProvider::size);
-
+/**
+ * Default team lists for various game sizes from 1 to 16 teams.
+ *
+ * <p>Colors are handpicked and the fewer the teams, the more contrasting are the colors.
+ *
+ * @author Hugman
+ */
+public final class DefaultTeamLists {
     private static final GameTeam BLUE = createTeam(DyeColor.BLUE);
     private static final GameTeam GREEN = createTeam(DyeColor.GREEN);
     private static final GameTeam YELLOW = createTeam(DyeColor.YELLOW);
@@ -44,21 +46,18 @@ public final class StandardTeamListProvider extends TeamListProvider {
     private static final GameTeam MAGENTA_AS_PURPLE = createTeam("purple", DyeColor.MAGENTA);
 
     private static final TeamListProvider RANDOM_TWO = ofLists(List.of(
-            List.of(RED, BLUE),
-            List.of(RED, YELLOW),
-            List.of(LIME_AS_GREEN, BLUE),
-            List.of(LIME_AS_GREEN, YELLOW),
-            List.of(RED, LIME_AS_GREEN),
-            List.of(LIME_AS_GREEN, PINK),
-            List.of(MAGENTA_AS_PURPLE, YELLOW),
-            List.of(YELLOW, BLUE),
-            List.of(MAGENTA_AS_PURPLE, ORANGE),
-            List.of(WHITE, BLACK)
+            List.of(LIGHT_BLUE_AS_BLUE, RED),
+            List.of(BLUE, ORANGE),
+            List.of(LIME_AS_GREEN, MAGENTA_AS_PURPLE),
+            List.of(YELLOW, PURPLE),
+            List.of(PINK, CYAN),
+            List.of(RED, GREEN),
+            List.of(LIGHT_BLUE_AS_BLUE, ORANGE)
     ));
 
     private static final TeamListProvider RANDOM_FOUR = ofLists(List.of(
             List.of(RED, BLUE, LIME_AS_GREEN, YELLOW),
-            List.of(LIME_AS_GREEN, ORANGE, PINK, LIGHT_BLUE_AS_BLUE)
+            List.of(LIME_AS_GREEN, ORANGE, PINK, CYAN)
     ));
 
     private static final List<GameTeam> POOL_SMALLEST = List.of(LIGHT_BLUE_AS_BLUE, LIME_AS_GREEN, YELLOW, RED);
@@ -68,15 +67,18 @@ public final class StandardTeamListProvider extends TeamListProvider {
     private static final List<GameTeam> POOL_TWELVE = List.of(BLUE, CYAN, LIGHT_BLUE, GREEN, LIME, YELLOW, ORANGE, RED, BROWN, PINK, MAGENTA, PURPLE);
     private static final List<GameTeam> POOL_FOURTEEN = List.of(BLUE, CYAN, LIGHT_BLUE, GREEN, LIME, YELLOW, ORANGE, RED, BROWN, PINK, MAGENTA, PURPLE, WHITE, BLACK);
     private static final List<GameTeam> POOL_BIGGEST = List.of(BLUE, CYAN, LIGHT_BLUE, GREEN, LIME, YELLOW, ORANGE, RED, BROWN, PINK, MAGENTA, PURPLE, WHITE, LIGHT_GRAY, GRAY, BLACK);
-    private final IntProvider size;
 
-    public StandardTeamListProvider(IntProvider size) {
-        this.size = size;
+    public static final Map<Integer, TeamListProvider> MAP = buildMap();
+
+    private static Map<Integer, TeamListProvider> buildMap() {
+        var map = new HashMap<Integer, TeamListProvider>();
+        for (int i = 1; i <= 16; i++) {
+            map.put(i, getEntry(i));
+        }
+        return map;
     }
 
-    @Override
-    public GameTeamList get(Random random) {
-        var size = this.size.get(random);
+    private static TeamListProvider getEntry(int size) {
         if (size <= 0) {
             throw new IllegalArgumentException("Team list cannot be empty. Please provide a valid size between 0 and 16.");
         }
@@ -84,70 +86,61 @@ public final class StandardTeamListProvider extends TeamListProvider {
             throw new IllegalArgumentException("Team list cannot be over 16. Please provide a valid size between than 0 and 16.");
         }
         if (size == 2) {
-            return RANDOM_TWO.get(random);
+            return RANDOM_TWO;
         }
         if (size == 4) {
-            return RANDOM_FOUR.get(random);
+            return RANDOM_FOUR;
         }
         if (size > 14) {
-            return ofPool(POOL_BIGGEST, size).get(random);
+            return ofPool(POOL_BIGGEST, size);
         }
         if (size > 12) {
-            return ofPool(POOL_FOURTEEN, size).get(random);
+            return ofPool(POOL_FOURTEEN, size);
         }
         if (size > 10) {
-            return ofPool(POOL_TWELVE, size).get(random);
+            return ofPool(POOL_TWELVE, size);
         }
         if (size > 7) {
-            return ofPool(POOL_TEN, size).get(random);
+            return ofPool(POOL_TEN, size);
         }
         if (size > 5) {
-            return ofPool(POOL_SEVEN, size).get(random);
+            return ofPool(POOL_SEVEN, size);
         }
         if (size > 4) {
-            return ofPool(POOL_FIVE, size).get(random);
+            return ofPool(POOL_FIVE, size);
         }
-        return ofPool(POOL_SMALLEST, size).get(random);
+        return ofPool(POOL_SMALLEST, size);
     }
 
-    @Override
-    public TeamListProviderType<?> getType() {
-        return TeamListProviderType.STANDARD;
-    }
-
-    public IntProvider size() {
-        return size;
-    }
-
-    private static RandomTeamListProvider ofLists(List<List<GameTeam>> lists) {
+    private static TeamListProvider ofLists(List<List<GameTeam>> lists) {
         return new RandomTeamListProvider(lists.stream()
                 .map(teamList -> (TeamListProvider) new ConstantTeamListProvider(teamList))
                 .toList()
         );
     }
 
-    private static TrimTeamListProvider ofPool(List<GameTeam> pool, int size) {
+    private static TeamListProvider ofPool(List<GameTeam> pool, int size) {
         return new TrimTeamListProvider(new ConstantTeamListProvider(pool), size);
     }
 
-    private static GameTeam createTeam(DyeColor dyeColor) {
-        return new GameTeam(
-                new GameTeamKey(dyeColor.getId()),
-                GameTeamConfig.builder()
-                        .setName(Text.translatable("color.minecraft." + dyeColor.getId()))
-                        .setColors(GameTeamConfig.Colors.from(dyeColor))
-                        .build()
-        );
-    }
-
     private static GameTeam createTeam(String name, DyeColor dyeColor) {
-        return new GameTeam(
-                new GameTeamKey(name),
-                GameTeamConfig.builder()
-                        .setName(Text.translatable("color.minecraft." + name))
-                        .setColors(GameTeamConfig.Colors.from(dyeColor))
-                        .build()
-        );
+        // black text is barely readable, so we use dark gray instead
+        var colors = dyeColor == DyeColor.BLACK ?
+                new GameTeamConfig.Colors(
+                        Formatting.DARK_GRAY,
+                        TextColor.fromRgb(dyeColor.getEntityColor()),
+                        dyeColor,
+                        TextColor.fromRgb(dyeColor.getFireworkColor())
+                )
+                : GameTeamConfig.Colors.from(dyeColor);
+
+        return new GameTeam(new GameTeamKey(name), GameTeamConfig.builder()
+                .setName(Text.translatable("color.minecraft." + name))
+                .setColors(colors)
+                .build());
     }
 
+    private static GameTeam createTeam(DyeColor dyeColor) {
+        return createTeam(dyeColor.getId(), dyeColor);
+    }
 }

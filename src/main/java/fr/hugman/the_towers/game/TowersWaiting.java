@@ -1,10 +1,14 @@
 package fr.hugman.the_towers.game;
 
+import eu.pb4.polymer.virtualentity.api.ElementHolder;
+import eu.pb4.polymer.virtualentity.api.attachment.ChunkAttachment;
+import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
-import fr.hugman.plasmid.api.game.team.provider.StandardTeamListProvider;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.TowersMap;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.decoration.Brightness;
+import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -70,21 +74,26 @@ public record TowersWaiting(
     }
 
     private void enable() {
-        var gameName = this.gameSpace.getMetadata().sourceConfig().value().name();
-        if (gameName == null) gameName = Text.of("The Towers");
-        Text[] GUIDE_LINES = {
-                gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD),
-                Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW),
-                Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW),
-                Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW),
-        };
+        this.displayRules();
+    }
 
+    private void displayRules() {
+        var gameName = this.gameSpace.getMetadata().sourceConfig().value().shortName();
+        if (gameName == null) gameName = Text.translatable("game.the_towers");
+        Text guideLines = gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD).append("\n")
+                .append(Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW)).append("\n")
+                .append(Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW)).append("\n")
+                .append(Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW));
         Vec3d pos = this.map.rules();
         this.world.getChunk(BlockPos.ofFloored(pos));
-        //TODO
-//        WorldHologram hologram = Holograms.create(this.world, pos, GUIDE_LINES);
-//        hologram.setAlignment(AbstractHologram.VerticalAlign.TOP);
-//        hologram.show();
+
+        TextDisplayElement element = new TextDisplayElement(guideLines);
+        element.setBillboardMode(DisplayEntity.BillboardMode.VERTICAL);
+        element.setBrightness(Brightness.FULL);
+        ElementHolder holder = new ElementHolder();
+        holder.addElement(element);
+
+        ChunkAttachment.of(holder, world, pos);
     }
 
     private GameResult requestStart() {

@@ -1,5 +1,8 @@
 package fr.hugman.the_towers.game;
 
+import eu.pb4.polymer.virtualentity.api.ElementHolder;
+import eu.pb4.polymer.virtualentity.api.attachment.ChunkAttachment;
+import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.config.TowersConfig;
@@ -12,6 +15,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.decoration.Brightness;
+import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerAbilities;
@@ -174,10 +179,17 @@ public class TowersActive {
                     this.resetPlayerInventory(player);
                 }
             });
-            //TODO
-            //WorldHologram hologram = Holograms.create(this.world, map.teamRegions().get(gameTeam.key()).pool().centerTop().add(0.0D, 0.5D, 0.0D), Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
-            //hologram.setAlignment(AbstractHologram.VerticalAlign.CENTER);
-            //hologram.show();
+
+            var gameTeam = this.teams.byKey(teamKey);
+
+            TextDisplayElement element = new TextDisplayElement(Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
+            element.setBillboardMode(DisplayEntity.BillboardMode.CENTER);
+            element.setSeeThrough(true);
+            element.setBrightness(Brightness.FULL);
+            ElementHolder holder = new ElementHolder();
+            holder.addElement(element);
+
+            ChunkAttachment.of(holder, world, map.teamRegions().get(teamKey).pool().centerTop().add(0.0D, 0.5D, 0.0D));
         });
         this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
     }
@@ -202,8 +214,14 @@ public class TowersActive {
                 }
                 this.teamManager.playersIn(teamKey).forEach(player -> {
                     TowersParticipant participant = this.participantMap.get(player);
+                    if(participant == null) {
+                        throw new IllegalStateException("Player " + player.getName().getString() + " in team " + teamKey + " has no participant data!");
+                    }
                     if (player != null) {
                         // death + respawn
+                        if(player.getY() < world.getBottomY() - 64) {
+                            player.damage(world, world.getDamageSources().outOfWorld(), Float.MAX_VALUE);
+                        }
                         if (participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
                             if ((participant.ticksUntilRespawn + 1) % 20 == 0) {
                                 player.networkHandler.sendPacket(new TitleFadeS2CPacket(0, 90, 0));
@@ -310,17 +328,16 @@ public class TowersActive {
         return acceptor.teleport(profile -> {
             GameTeamKey gameTeamKey = this.teamManager.teamFor(PlayerRef.of(profile));
             if (gameTeamKey instanceof GameTeamKey) {
+                // player is in a team, teleport to their spawn
                 return new PlayerPos(this.world, this.map.teamRegions().get(gameTeamKey).spawn().center(), 0.0f, 0.0f);
             }
+            // player has no team, teleport to spawn
             return new PlayerPos(this.world, this.map.spawn(), 0.0f, 0.0f);
         }).thenRunForEach(player -> {
             GameTeamKey gameTeamKey = this.teamManager.teamFor(player);
             if (gameTeamKey instanceof GameTeamKey) {
                 GameTeam gameTeam = this.teams.byKey(this.teamManager.teamFor(player));
                 TeamData theTowersTeam = teamMap.get(gameTeam);
-                TheTowers.LOGGER.info(gameTeam);
-                TheTowers.LOGGER.info(teamMap);
-                TheTowers.LOGGER.info(theTowersTeam);
                 if (theTowersTeam instanceof TeamData && theTowersTeam.health > 0) {
                     player.changeGameMode(GameMode.SURVIVAL);
                     this.resetPlayer(player);

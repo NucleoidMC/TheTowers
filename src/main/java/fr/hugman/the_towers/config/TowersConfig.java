@@ -8,7 +8,6 @@ import fr.hugman.plasmid.api.game_map.GameMap;
 import net.minecraft.SharedConstants;
 import net.minecraft.registry.entry.RegistryEntry;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
-import xyz.nucleoid.plasmid.api.game.common.team.GameTeamList;
 
 public record TowersConfig(
         WaitingLobbyConfig playerConfig,
@@ -25,7 +24,7 @@ public record TowersConfig(
 
     public static final MapCodec<TowersConfig> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             WaitingLobbyConfig.CODEC.fieldOf("players").forGetter(TowersConfig::playerConfig),
-            TeamListProvider.TYPE_CODEC.fieldOf("teams").forGetter(TowersConfig::teamConfig),
+            TeamListProvider.CODEC.fieldOf("teams").forGetter(TowersConfig::teamConfig),
             GameMap.ENTRY_CODEC.fieldOf("map").forGetter(TowersConfig::map),
             Codec.INT.fieldOf("max_health").forGetter(TowersConfig::maxHealth),
             Codec.BOOL.optionalFieldOf("health_stealth", DEFAULT_HEALTH_SLEATH).forGetter(TowersConfig::healthStealth),

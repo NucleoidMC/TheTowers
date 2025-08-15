@@ -20,8 +20,10 @@ import java.util.Optional;
 public record TowersSidebar(SidebarWidget sidebarWidget, Optional<Text> mapName) {
     public static TowersSidebar create(GlobalWidgets widgets, GameSpace gameSpace) {
         var config = gameSpace.getMetadata().sourceConfig();
+        var gameName = config.value().shortName();
+        if (gameName == null) gameName = Text.translatable("game.the_towers");
         return new TowersSidebar(
-                widgets.addSidebar(GameConfig.shortName(config).copy().formatted(Formatting.BOLD, Formatting.GOLD)),
+                widgets.addSidebar(gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD)),
                 ((TowersConfig) config.value().config()).map().value().getMetadata().flatMap(GameMapMetadata::name)
         );
     }
