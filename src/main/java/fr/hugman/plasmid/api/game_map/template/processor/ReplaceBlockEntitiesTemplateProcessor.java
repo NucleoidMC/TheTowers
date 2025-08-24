@@ -3,15 +3,20 @@ package fr.hugman.plasmid.api.game_map.template.processor;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.context.ContextParameterMap;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 
 import java.util.Map;
 
-//TODO: replace int values (for colors)
-public record ReplaceBlockEntitiesTemplateProcessor(
-        Map<String, String> searchAndReplace
-) implements MapTemplateProcessor {
+/**
+ * Template processor that replaces block entity NBT data in a {@link MapTemplate} based on a simple search and replace map.
+ *
+ * @param searchAndReplace the map of keys to replace with their corresponding values
+ *
+ * @author Hugman
+ */
+public record ReplaceBlockEntitiesTemplateProcessor(Map<String, String> searchAndReplace) implements MapTemplateProcessor {
     public static final MapCodec<ReplaceBlockEntitiesTemplateProcessor> CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("search_and_replace").xmap(ReplaceBlockEntitiesTemplateProcessor::new, ReplaceBlockEntitiesTemplateProcessor::searchAndReplace);
 
     @Override
@@ -19,7 +24,8 @@ public record ReplaceBlockEntitiesTemplateProcessor(
         return MapTemplateProcessorType.REPLACE_BLOCK_ENTITIES;
     }
 
-    public void processTemplate(GameActivity activity, MapTemplate template) {
+    @Override
+    public void processTemplate(MapTemplate template, ContextParameterMap.Builder parameters) {
         template.getBounds().forEach(pos -> {
             var nbtCompound = template.getBlockEntityNbt(pos);
             if (nbtCompound instanceof NbtCompound) {

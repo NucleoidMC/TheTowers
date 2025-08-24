@@ -3,11 +3,11 @@ package fr.hugman.the_towers.config;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import fr.hugman.plasmid.api.game.team.provider.TeamListProvider;
 import fr.hugman.plasmid.api.game_map.GameMap;
 import net.minecraft.SharedConstants;
 import net.minecraft.registry.entry.RegistryEntry;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
+import xyz.nucleoid.plasmid.api.game.common.team.provider.TeamListProvider;
 
 public record TowersConfig(
         WaitingLobbyConfig playerConfig,

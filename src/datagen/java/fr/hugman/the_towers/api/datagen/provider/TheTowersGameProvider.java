@@ -1,6 +1,5 @@
 package fr.hugman.the_towers.api.datagen.provider;
 
-import fr.hugman.plasmid.api.game.team.provider.TeamListProvider;
 import fr.hugman.plasmid.api.game_map.GameMap;
 import fr.hugman.plasmid.api.registry.PlasmidRegistryKeys;
 import fr.hugman.the_towers.api.game.TheTowersGameConfigs;
@@ -17,6 +16,7 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import xyz.nucleoid.plasmid.api.game.common.config.PlayerLimiterConfig;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
+import xyz.nucleoid.plasmid.api.game.common.team.provider.TeamListProvider;
 import xyz.nucleoid.plasmid.api.game.config.CustomValuesConfig;
 import xyz.nucleoid.plasmid.api.game.config.GameConfig;
 

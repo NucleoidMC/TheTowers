@@ -2,10 +2,10 @@ package fr.hugman.plasmid.api.game_map;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.plasmid.api.game_map.template.processor.MapTemplateProcessor;
-import fr.hugman.plasmid.api.game_map.template.processor.TeamColorMapTemplateProcessor;
-import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.context.ContextParameterMap;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
@@ -40,7 +40,7 @@ public record TemplateGameMap(
             var server = activity.getGameSpace().getServer();
             var template = MapTemplateSerializer.loadFromResource(server, this.id);
             for (var processor : this.processors) {
-                processor.processTemplate(activity, template);
+                processor.processTemplate(template, getProcessorParameters(activity));
             }
             return new GameMapLoadResult(new TemplateChunkGenerator(server, template), Optional.of(template.getMetadata()));
         } catch (IOException e) {
@@ -51,5 +51,10 @@ public record TemplateGameMap(
     @Override
     public Optional<GameMapMetadata> getMetadata() {
         return this.metadata;
+    }
+
+    private static ContextParameterMap.Builder getProcessorParameters(GameActivity activity) {
+        return new ContextParameterMap.Builder()
+                .addNullable(MapLoadContexts.TEAM_LIST, activity.getGameSpace().getAttachment(PlasmidGameAttachments.TEAM_LIST));
     }
 }

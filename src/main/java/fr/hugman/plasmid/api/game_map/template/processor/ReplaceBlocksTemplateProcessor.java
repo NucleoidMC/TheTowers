@@ -2,24 +2,23 @@ package fr.hugman.plasmid.api.game_map.template.processor;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
-import fr.hugman.the_towers.TheTowers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.state.property.Property;
-import net.minecraft.text.Text;
-import net.minecraft.util.DyeColor;
+import net.minecraft.util.context.ContextParameterMap;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
-import xyz.nucleoid.plasmid.api.game.GameOpenException;
-import xyz.nucleoid.plasmid.api.util.ColoredBlocks;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+/**
+ * Template processor that replaces blocks in a template with specified blocks.
+ *
+ * @param blocks a map of blocks to replace, where the key is the block to be replaced and the value is the new block
+ *
+ * @author Hugman
+ */
 public record ReplaceBlocksTemplateProcessor(Map<Block, Block> blocks) implements MapTemplateProcessor {
     public static final MapCodec<ReplaceBlocksTemplateProcessor> CODEC = Codec.unboundedMap(Registries.BLOCK.getCodec(), Registries.BLOCK.getCodec()).fieldOf("blocks").xmap(ReplaceBlocksTemplateProcessor::new, ReplaceBlocksTemplateProcessor::blocks);
 
@@ -28,12 +27,13 @@ public record ReplaceBlocksTemplateProcessor(Map<Block, Block> blocks) implement
         return MapTemplateProcessorType.REPLACE_BLOCKS;
     }
 
-    public void processTemplate(GameActivity activity, MapTemplate template) {
+    @Override
+    public void processTemplate(MapTemplate template, ContextParameterMap.Builder parameters) {
         template.getBounds().forEach(pos -> {
             var state = template.getBlockState(pos);
             var block = state.getBlock();
             Block newBlock = null;
-            for (var entry : blocks.entrySet()) {
+            for (var entry : this.blocks.entrySet()) {
                 if (entry.getKey() == block) {
                     newBlock = entry.getValue();
                     break;
