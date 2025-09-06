@@ -3,12 +3,13 @@ package fr.hugman.plasmid.api.game_map;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
-import fr.hugman.plasmid.api.game_map.template.processor.MapTemplateProcessor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.map.MapLoadContexts;
+import xyz.nucleoid.plasmid.api.map.template.processor.MapTemplateProcessor;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,7 +23,7 @@ public record TemplateGameMap(
     public static final MapCodec<TemplateGameMap> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
             GameMapMetadata.CODEC.optionalFieldOf("metadata").forGetter(TemplateGameMap::metadata),
-            MapTemplateProcessor.TYPE_CODEC.listOf().optionalFieldOf("processors", List.of()).forGetter(TemplateGameMap::processors)
+            MapTemplateProcessor.CODEC.listOf().optionalFieldOf("processors", List.of()).forGetter(TemplateGameMap::processors)
     ).apply(instance, TemplateGameMap::new));
 
     public TemplateGameMap(Identifier id, GameMapMetadata metadata, MapTemplateProcessor... processors) {

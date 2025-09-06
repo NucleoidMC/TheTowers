@@ -2,7 +2,6 @@ package fr.hugman.the_towers;
 
 import com.google.common.reflect.Reflection;
 import fr.hugman.plasmid.api.game_map.GameMapType;
-import fr.hugman.plasmid.api.game_map.template.processor.MapTemplateProcessorType;
 import fr.hugman.plasmid.api.registry.PlasmidRegistries;
 import fr.hugman.plasmid.api.registry.PlasmidRegistryKeys;
 import fr.hugman.the_towers.game.TheTowersGameTypes;
@@ -29,6 +28,5 @@ public class TheTowers implements ModInitializer {
         Reflection.initialize(PlasmidRegistries.class);
         PlasmidRegistryKeys.register();
         Reflection.initialize(GameMapType.class);
-        Reflection.initialize(MapTemplateProcessorType.class);
     }
 }
