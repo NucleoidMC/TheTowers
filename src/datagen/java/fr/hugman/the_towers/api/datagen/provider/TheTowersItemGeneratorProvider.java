@@ -5,13 +5,12 @@ import fr.hugman.the_towers.map.generator.ItemGeneratorConfig;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
 import net.minecraft.SharedConstants;
-import net.minecraft.item.Items;
-import net.minecraft.registry.RegistryWrapper;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.Items;
 import java.util.concurrent.CompletableFuture;
 
 public class TheTowersItemGeneratorProvider extends FabricDynamicRegistryProvider {
-    public TheTowersItemGeneratorProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+    public TheTowersItemGeneratorProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 
@@ -21,7 +20,7 @@ public class TheTowersItemGeneratorProvider extends FabricDynamicRegistryProvide
     }
 
     @Override
-    protected void configure(RegistryWrapper.WrapperLookup registries, Entries entries) {
+    protected void configure(HolderLookup.Provider registries, Entries entries) {
         var baseCooldown = SharedConstants.TICKS_PER_SECOND * 15;
         entries.add(TheTowersGenerators.IRON_LOW, new ItemGeneratorConfig(Items.IRON_INGOT, baseCooldown * 2));
         entries.add(TheTowersGenerators.IRON_MEDIUM, new ItemGeneratorConfig(Items.IRON_INGOT, baseCooldown));

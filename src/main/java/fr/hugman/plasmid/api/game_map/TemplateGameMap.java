@@ -3,8 +3,6 @@ package fr.hugman.plasmid.api.game_map;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.context.ContextParameterMap;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
@@ -14,19 +12,21 @@ import xyz.nucleoid.plasmid.api.map.template.processor.MapTemplateProcessor;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.context.ContextMap;
 
 public record TemplateGameMap(
-        Identifier id,
+        ResourceLocation id,
         Optional<GameMapMetadata> metadata,
         List<MapTemplateProcessor> processors
 ) implements GameMap {
     public static final MapCodec<TemplateGameMap> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
+            ResourceLocation.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
             GameMapMetadata.CODEC.optionalFieldOf("metadata").forGetter(TemplateGameMap::metadata),
             MapTemplateProcessor.CODEC.listOf().optionalFieldOf("processors", List.of()).forGetter(TemplateGameMap::processors)
     ).apply(instance, TemplateGameMap::new));
 
-    public TemplateGameMap(Identifier id, GameMapMetadata metadata, MapTemplateProcessor... processors) {
+    public TemplateGameMap(ResourceLocation id, GameMapMetadata metadata, MapTemplateProcessor... processors) {
         this(id, Optional.of(metadata), List.of(processors));
     }
 
@@ -54,8 +54,8 @@ public record TemplateGameMap(
         return this.metadata;
     }
 
-    private static ContextParameterMap.Builder getProcessorParameters(GameActivity activity) {
-        return new ContextParameterMap.Builder()
-                .addNullable(MapLoadContexts.TEAM_LIST, activity.getGameSpace().getAttachment(PlasmidGameAttachments.TEAM_LIST));
+    private static ContextMap.Builder getProcessorParameters(GameActivity activity) {
+        return new ContextMap.Builder()
+                .withOptionalParameter(MapLoadContexts.TEAM_LIST, activity.getGameSpace().getAttachment(PlasmidGameAttachments.TEAM_LIST));
     }
 }

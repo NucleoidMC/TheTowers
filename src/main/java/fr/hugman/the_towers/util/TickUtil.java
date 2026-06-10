@@ -1,7 +1,7 @@
 package fr.hugman.the_towers.util;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 public final class TickUtil {
     private TickUtil() {
@@ -35,16 +35,16 @@ public final class TickUtil {
         return l <= max && l % each == 0;
     }
 
-    public static Text format(long t) {
+    public static Component format(long t) {
         if (getHours(t) > 0) {
-            return Text.literal(String.format("%02d:%02d:%02d", getHours(t), getMinutes(t), getSeconds(t)));
+            return Component.literal(String.format("%02d:%02d:%02d", getHours(t), getMinutes(t), getSeconds(t)));
         } else {
-            return Text.literal(String.format("%02d:%02d", getMinutes(t), getSeconds(t)));
+            return Component.literal(String.format("%02d:%02d", getMinutes(t), getSeconds(t)));
         }
     }
 
-    public static MutableText formatPretty(long t) {
-        MutableText text = Text.literal("");
+    public static MutableComponent formatPretty(long t) {
+        MutableComponent text = Component.literal("");
         long hours = getHours(t);
         long minutes = getMinutes(t);
         long seconds = getSeconds(t);
@@ -52,29 +52,29 @@ public final class TickUtil {
         boolean textBefore = false;
         if (hours > 0) {
             if (hours == 1) {
-                text.append(Text.translatable("text.the_towers.time.hour"));
+                text.append(Component.translatable("text.the_towers.time.hour"));
             } else {
-                text.append(Text.translatable("text.the_towers.time.hours", hours));
+                text.append(Component.translatable("text.the_towers.time.hours", hours));
             }
             textBefore = true;
         }
         if (minutes > 0) {
             if (textBefore)
-                text.append(Text.literal(" ")).append(Text.translatable("text.the_towers.and")).append(Text.literal(" "));
+                text.append(Component.literal(" ")).append(Component.translatable("text.the_towers.and")).append(Component.literal(" "));
             if (minutes == 1) {
-                text.append(Text.translatable("text.the_towers.time.minute"));
+                text.append(Component.translatable("text.the_towers.time.minute"));
             } else {
-                text.append(Text.translatable("text.the_towers.time.minutes", minutes));
+                text.append(Component.translatable("text.the_towers.time.minutes", minutes));
             }
             textBefore = true;
         }
         if (seconds > 0) {
             if (textBefore)
-                text.append(Text.literal(" ")).append(Text.translatable("text.the_towers.and")).append(Text.literal(" "));
+                text.append(Component.literal(" ")).append(Component.translatable("text.the_towers.and")).append(Component.literal(" "));
             if (seconds == 1) {
-                text.append(Text.translatable("text.the_towers.time.second"));
+                text.append(Component.translatable("text.the_towers.time.second"));
             } else {
-                text.append(Text.translatable("text.the_towers.time.seconds", seconds));
+                text.append(Component.translatable("text.the_towers.time.seconds", seconds));
             }
         }
 

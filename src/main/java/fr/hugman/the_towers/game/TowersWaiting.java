@@ -6,16 +6,6 @@ import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.TowersMap;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.decoration.Brightness;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.api.game.*;
 import xyz.nucleoid.plasmid.api.game.common.GameWaitingLobby;
 import xyz.nucleoid.plasmid.api.game.common.team.TeamSelectionLobby;
@@ -30,10 +20,20 @@ import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Set;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Brightness;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 public record TowersWaiting(
         GameSpace gameSpace,
-        ServerWorld world,
+        ServerLevel world,
         TowersMap map,
         TowersConfig config,
         TeamSelectionLobby teamSelection
@@ -42,17 +42,17 @@ public record TowersWaiting(
         return context.open((activity) -> {
             TowersConfig config = context.config();
 
-            var teams = config.teamConfig().get(context.server().getOverworld().getRandom());
+            var teams = config.teamConfig().get(context.server().overworld().getRandom());
 
             activity.getGameSpace().setAttachment(PlasmidGameAttachments.TEAM_LIST, teams);
 
             var mapLoadResult = config.map().value().load(activity, config);
             if (null == mapLoadResult) {
-                throw new GameOpenException(Text.literal("Failed to load map"));  //TODO: translate
+                throw new GameOpenException(Component.literal("Failed to load map"));  //TODO: translate
             }
 
             TowersMap map = TowersMap.build(activity, mapLoadResult);
-            ServerWorld world = activity.getGameSpace().getWorlds().add(map.worldConfig());
+            ServerLevel world = activity.getGameSpace().getWorlds().add(map.worldConfig());
 
             GameWaitingLobby.addTo(activity, config.playerConfig());
 
@@ -79,17 +79,17 @@ public record TowersWaiting(
 
     private void displayRules() {
         var gameName = this.gameSpace.getMetadata().sourceConfig().value().shortName();
-        if (gameName == null) gameName = Text.translatable("game.the_towers");
-        Text guideLines = gameName.copy().formatted(Formatting.BOLD, Formatting.GOLD).append("\n")
-                .append(Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.YELLOW)).append("\n")
-                .append(Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.YELLOW)).append("\n")
-                .append(Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.YELLOW));
-        Vec3d pos = this.map.rules();
-        this.world.getChunk(BlockPos.ofFloored(pos));
+        if (gameName == null) gameName = Component.translatable("game.the_towers");
+        Component guideLines = gameName.copy().withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD).append("\n")
+                .append(Component.translatable("text.the_towers.guide.craft_stuff").withStyle(ChatFormatting.YELLOW)).append("\n")
+                .append(Component.translatable("text.the_towers.guide.jumping_into_pool").withStyle(ChatFormatting.YELLOW)).append("\n")
+                .append(Component.translatable("text.the_towers.guide.protect_your_pool").withStyle(ChatFormatting.YELLOW));
+        Vec3 pos = this.map.rules();
+        this.world.getChunk(BlockPos.containing(pos));
 
         TextDisplayElement element = new TextDisplayElement(guideLines);
-        element.setBillboardMode(DisplayEntity.BillboardMode.VERTICAL);
-        element.setBrightness(Brightness.FULL);
+        element.setBillboardMode(Display.BillboardConstraints.VERTICAL);
+        element.setBrightness(Brightness.FULL_BRIGHT);
         ElementHolder holder = new ElementHolder();
         holder.addElement(element);
 
@@ -104,19 +104,19 @@ public record TowersWaiting(
     private JoinAcceptorResult offerPlayer(JoinAcceptor acceptor) {
         return acceptor.teleport(this.world, this.map.spawn()).thenRun((players) -> {
             players.forEach((player) -> {
-                player.changeGameMode(GameMode.ADVENTURE);
+                player.setGameMode(GameType.ADVENTURE);
             });
         });
     }
 
-    private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
+    private EventResult killPlayer(ServerPlayer player, DamageSource source) {
         player.setHealth(20.0f);
         this.tpPlayer(player);
         return EventResult.DENY;
     }
 
-    private void tpPlayer(ServerPlayerEntity player) {
+    private void tpPlayer(ServerPlayer player) {
         var pos = this.map.spawn();
-        player.teleport(this.world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, Set.of(), 0.0F, 0.0F, false);
+        player.teleportTo(this.world, pos.x() + 0.5, pos.y() + 0.5, pos.z() + 0.5, Set.of(), 0.0F, 0.0F, false);
     }
 }

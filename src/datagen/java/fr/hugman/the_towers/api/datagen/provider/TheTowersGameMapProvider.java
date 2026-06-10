@@ -11,19 +11,17 @@ import fr.hugman.the_towers.api.author.TheTowersUUIDs;
 import fr.hugman.the_towers.api.game_map.TheTowersGameMaps;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
-import net.minecraft.registry.Registerable;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.util.DyeColor;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.DyeColor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class TheTowersGameMapProvider extends FabricDynamicRegistryProvider {
-    public TheTowersGameMapProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+    public TheTowersGameMapProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 
@@ -33,13 +31,13 @@ public class TheTowersGameMapProvider extends FabricDynamicRegistryProvider {
     }
 
     @Override
-    protected void configure(RegistryWrapper.WrapperLookup registries, Entries entries) {
-        entries.addAll(registries.getOrThrow(PlasmidRegistryKeys.GAME_MAP));
+    protected void configure(HolderLookup.Provider registries, Entries entries) {
+        entries.addAll(registries.lookupOrThrow(PlasmidRegistryKeys.GAME_MAP));
     }
 
-    public static void register(Registerable<GameMap> registerable) {
+    public static void register(BootstrapContext<GameMap> registerable) {
         var classicMetadata = new GameMapMetadata(
-                Text.translatable("game_map.the_towers.classic"),
+                Component.translatable("game_map.the_towers.classic"),
                 new Author(TheTowersUUIDs.QUIJX),
                 new Author(TheTowersUUIDs.HUGMAN)
         );

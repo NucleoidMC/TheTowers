@@ -2,7 +2,6 @@ package fr.hugman.the_towers.map;
 
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.text.Text;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
@@ -20,8 +19,8 @@ public record TeamRegion(BlockBounds spawn, BlockBounds pool, LongSet domains, f
     public static TeamRegion fromTemplate(int i, MapTemplateMetadata metadata) {
             TemplateRegion spawnRegion = metadata.getFirstRegion(i + "_spawn");
             BlockBounds spawn = Objects.requireNonNull(spawnRegion).getBounds();
-            float spawnYaw = spawnRegion.getData().getFloat("Yaw", 0);
-            float spawnPitch = spawnRegion.getData().getFloat("Pitch", 0);
+            float spawnYaw = spawnRegion.getData().getFloatOr("Yaw", 0);
+            float spawnPitch = spawnRegion.getData().getFloatOr("Pitch", 0);
 
             TemplateRegion poolRegion = metadata.getFirstRegion(i + "_pool");
             BlockBounds pool = Objects.requireNonNull(poolRegion).getBounds();

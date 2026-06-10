@@ -11,39 +11,6 @@ import fr.hugman.the_towers.map.TowersMap;
 import fr.hugman.the_towers.util.FormattingUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.decoration.Brightness;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerAbilities;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.s2c.play.GameStateChangeS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.scoreboard.AbstractTeam;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ItemScatterer;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
@@ -68,16 +35,49 @@ import xyz.nucleoid.stimuli.event.item.ItemThrowEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Set;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Brightness;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Abilities;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Team;
 
 public class TowersActive {
     private final GameSpace gameSpace;
     private final GameActivity activity;
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final TowersConfig config;
     private final TowersMap map;
     private final GameTeamList teams;
 
-    private Object2ObjectMap<ServerPlayerEntity, TowersParticipant> participantMap;
+    private Object2ObjectMap<ServerPlayer, TowersParticipant> participantMap;
     private Object2ObjectMap<GameTeamKey, TeamData> teamMap;
     private TeamManager teamManager;
 
@@ -88,7 +88,7 @@ public class TowersActive {
     private boolean hasEnded = false;
     private long gameCloseTick = -1L;
 
-    private TowersActive(GameSpace gameSpace, GameActivity activity, ServerWorld world, TowersMap map, TowersConfig config, TowersSidebar sidebar, TeamSelectionLobby teamSelection) {
+    private TowersActive(GameSpace gameSpace, GameActivity activity, ServerLevel world, TowersMap map, TowersConfig config, TowersSidebar sidebar, TeamSelectionLobby teamSelection) {
         this.gameSpace = gameSpace;
         this.activity = activity;
         this.world = world;
@@ -110,7 +110,7 @@ public class TowersActive {
         for (GameTeam team : this.teams) {
             team = team.withConfig(GameTeamConfig.builder(team.config())
                     .setFriendlyFire(false)
-                    .setCollision(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS)
+                    .setCollision(Team.CollisionRule.PUSH_OTHER_TEAMS)
                     .build());
             this.teamManager.addTeam(team);
             this.teamMap.put(team.key(), new TeamData(this.config.maxHealth()));
@@ -122,7 +122,7 @@ public class TowersActive {
         });
     }
 
-    public static void enable(GameSpace gameSpace, ServerWorld world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection) {
+    public static void enable(GameSpace gameSpace, ServerLevel world, TowersMap map, TowersConfig config, TeamSelectionLobby teamSelection) {
         gameSpace.setActivity(activity -> {
             PlayerLimiter.addTo(activity, config.playerConfig().playerConfig());
             GlobalWidgets widgets = GlobalWidgets.addTo(activity);
@@ -158,22 +158,22 @@ public class TowersActive {
     private void enable() {
         this.nextRefillTick = this.gameTick + this.config.refillCooldown();
 
-        Text[] guideLines = {
-                Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
-                this.gameSpace.getMetadata().sourceConfig().value().name().copy().formatted(Formatting.BOLD, Formatting.GOLD),
-                Text.translatable("text.the_towers.guide.craft_stuff").formatted(Formatting.WHITE),
-                Text.translatable("text.the_towers.guide.jumping_into_pool").formatted(Formatting.WHITE),
-                Text.translatable("text.the_towers.guide.protect_your_pool").formatted(Formatting.WHITE),
-                Text.literal("+--------------------------------------+").formatted(Formatting.DARK_GRAY),
+        Component[] guideLines = {
+                Component.literal("+--------------------------------------+").withStyle(ChatFormatting.DARK_GRAY),
+                this.gameSpace.getMetadata().sourceConfig().value().name().copy().withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD),
+                Component.translatable("text.the_towers.guide.craft_stuff").withStyle(ChatFormatting.WHITE),
+                Component.translatable("text.the_towers.guide.jumping_into_pool").withStyle(ChatFormatting.WHITE),
+                Component.translatable("text.the_towers.guide.protect_your_pool").withStyle(ChatFormatting.WHITE),
+                Component.literal("+--------------------------------------+").withStyle(ChatFormatting.DARK_GRAY),
         };
 
-        for (Text text : guideLines) {
+        for (Component text : guideLines) {
             this.gameSpace.getPlayers().sendMessage(text);
         }
         this.teamMap.keySet().forEach(teamKey -> {
             this.teamManager.playersIn(teamKey).forEach(player -> {
                 if (player != null) {
-                    player.changeGameMode(GameMode.SURVIVAL);
+                    player.setGameMode(GameType.SURVIVAL);
                     this.resetPlayer(player);
                     this.spawnPlayerAtTheirSpawn(player);
                     this.resetPlayerInventory(player);
@@ -182,10 +182,10 @@ public class TowersActive {
 
             var gameTeam = this.teams.byKey(teamKey);
 
-            TextDisplayElement element = new TextDisplayElement(Text.translatable("text.the_towers.pool", gameTeam.config().name()).formatted(gameTeam.config().chatFormatting()));
-            element.setBillboardMode(DisplayEntity.BillboardMode.CENTER);
+            TextDisplayElement element = new TextDisplayElement(Component.translatable("text.the_towers.pool", gameTeam.config().name()).withStyle(gameTeam.config().chatFormatting()));
+            element.setBillboardMode(Display.BillboardConstraints.CENTER);
             element.setSeeThrough(true);
-            element.setBrightness(Brightness.FULL);
+            element.setBrightness(Brightness.FULL_BRIGHT);
             ElementHolder holder = new ElementHolder();
             holder.addElement(element);
 
@@ -195,7 +195,7 @@ public class TowersActive {
     }
 
     private void tick() {
-        long worldTime = world.getTime();
+        long worldTime = world.getGameTime();
         this.gameTick++;
 
         if (this.gameTick == this.nextRefillTick) {
@@ -210,7 +210,7 @@ public class TowersActive {
                 TeamData teamData = this.teamMap.get(teamKey);
                 BlockBounds pool = this.map.teamRegions().get(teamKey).pool();
                 if (this.gameTick % 60 == 0) {
-                    pool.iterator().forEachRemaining(pos -> world.spawnParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
+                    pool.iterator().forEachRemaining(pos -> world.sendParticles(ParticleTypes.END_ROD, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, 2, 0.25D, 0.0D, 0.25D, 0.0D));
                 }
                 this.teamManager.playersIn(teamKey).forEach(player -> {
                     TowersParticipant participant = this.participantMap.get(player);
@@ -219,17 +219,17 @@ public class TowersActive {
                     }
                     if (player != null) {
                         // death + respawn
-                        if(player.getY() < world.getBottomY() - 64) {
-                            player.damage(world, world.getDamageSources().outOfWorld(), Float.MAX_VALUE);
+                        if(player.getY() < world.getMinY() - 64) {
+                            player.hurtServer(world, world.damageSources().fellOutOfWorld(), Float.MAX_VALUE);
                         }
                         if (participant.ticksUntilRespawn >= 0 && teamData.health > 0) {
                             if ((participant.ticksUntilRespawn + 1) % 20 == 0) {
-                                player.networkHandler.sendPacket(new TitleFadeS2CPacket(0, 90, 0));
-                                player.networkHandler.sendPacket(new TitleS2CPacket(Text.translatable("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20 + 1)).formatted(Formatting.GOLD)));
+                                player.connection.send(new ClientboundSetTitlesAnimationPacket(0, 90, 0));
+                                player.connection.send(new ClientboundSetTitleTextPacket(Component.translatable("text.the_towers.respawn_in", (int) (participant.ticksUntilRespawn / 20 + 1)).withStyle(ChatFormatting.GOLD)));
                             }
                             if (participant.ticksUntilRespawn == 0) {
-                                player.changeGameMode(GameMode.SURVIVAL);
-                                player.networkHandler.sendPacket(new TitleS2CPacket(Text.literal("")));
+                                player.setGameMode(GameType.SURVIVAL);
+                                player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("")));
                                 this.resetPlayer(player);
                                 this.resetPlayerInventory(player);
                                 this.spawnPlayerAtTheirSpawn(player);
@@ -242,21 +242,21 @@ public class TowersActive {
                             TeamData enemyTeamData = this.teamMap.get(enemyTeamKey);
                             if (teamKey != enemyTeamKey && enemyTeamData.health > 0) {
                                 TeamRegion enemyRegion = this.map.teamRegions().get(enemyTeamKey);
-                                if (enemyRegion.pool().contains(player.getBlockPos()) && player.interactionManager.isSurvivalLike()) {
+                                if (enemyRegion.pool().contains(player.blockPosition()) && player.gameMode.isSurvival()) {
                                     // The player is in an enemy's pool. They make them lose a point and steal them if the configuration allows it.
                                     this.spawnPlayerAtTheirSpawn(player);
                                     enemyTeamData.health--;
                                     if (this.config.healthStealth()) {
                                         var teamConfig = this.teamManager.getTeamConfig(enemyTeamKey);
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_stole", player.getName(), teamConfig.name()));
+                                        Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Component.translatable("text.the_towers.health_stole", player.getName(), teamConfig.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                         teamData.health++;
                                     } else {
                                         var teamConfig = this.teamManager.getTeamConfig(enemyTeamKey);
-                                        Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.health_removed", player.getName(), teamConfig.name()));
+                                        Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Component.translatable("text.the_towers.health_removed", player.getName(), teamConfig.name()));
                                         this.gameSpace.getPlayers().sendMessage(msg);
                                     }
-                                    this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_BLAZE_HURT);
+                                    this.gameSpace.getPlayers().playSound(SoundEvents.BLAZE_HURT);
                                     this.checkWin();
                                 }
                             }
@@ -279,8 +279,8 @@ public class TowersActive {
         long aliveCount = this.teamMap.values().stream().filter(team -> team.health > 0).count();
         // No teamConfig are alive. Weird!
         if (aliveCount == 0) {
-            Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.nobody_won"));
-            this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
+            Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.GENERAL_STYLE, Component.translatable("text.the_towers.nobody_won"));
+            this.gameSpace.getPlayers().sendMessage(Component.literal("\n").append(msg).append("\n"));
             this.hasEnded = true;
         }
         this.teamMap.forEach((teamKey, teamData) -> {
@@ -289,22 +289,22 @@ public class TowersActive {
                 teamData.health = -1;
                 this.teamManager.playersIn(teamKey).forEach(player -> {
                     if (player != null) {
-                        player.changeGameMode(GameMode.SPECTATOR);
+                        player.setGameMode(GameType.SPECTATOR);
                         this.resetPlayer(player);
                     }
                 });
                 var config = this.teamManager.getTeamConfig(teamKey);
-                Text msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_eliminated", config.name()));
-                this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
-                this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_FIREWORK_ROCKET_BLAST);
+                Component msg = FormattingUtil.format(FormattingUtil.X_SYMBOL, FormattingUtil.GENERAL_STYLE, Component.translatable("text.the_towers.team_eliminated", config.name()));
+                this.gameSpace.getPlayers().sendMessage(Component.literal("\n").append(msg).append("\n"));
+                this.gameSpace.getPlayers().playSound(SoundEvents.FIREWORK_ROCKET_BLAST);
             }
         });
         this.teamMap.forEach((teamKey, team) -> {
             if (aliveCount == 1 && team.health > 0) {
                 // The selected team is the only team left that is alive. They win.
                 var config = this.teamManager.getTeamConfig(teamKey);
-                Text msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Text.translatable("text.the_towers.team_won", config.name()));
-                this.gameSpace.getPlayers().sendMessage(Text.literal("\n").append(msg).append("\n"));
+                Component msg = FormattingUtil.format(FormattingUtil.STAR_SYMBOL, FormattingUtil.GENERAL_STYLE, Component.translatable("text.the_towers.team_won", config.name()));
+                this.gameSpace.getPlayers().sendMessage(Component.literal("\n").append(msg).append("\n"));
                 this.gameSpace.getPlayers().playSound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
                 this.hasEnded = true;
             }
@@ -312,10 +312,10 @@ public class TowersActive {
 
         // Close game after 30 seconds.
         if (this.hasEnded) {
-            this.gameCloseTick = world.getTime() + 600;
+            this.gameCloseTick = world.getGameTime() + 600;
             this.participantMap.keySet().forEach(player -> {
                 if (this.gameSpace.getPlayers().contains(player)) {
-                    player.changeGameMode(GameMode.SPECTATOR);
+                    player.setGameMode(GameType.SPECTATOR);
                     this.resetPlayer(player);
                     this.sidebar.update(this.gameTick, this.nextRefillTick, this.teamManager, this.teamMap);
                 }
@@ -339,76 +339,76 @@ public class TowersActive {
                 GameTeam gameTeam = this.teams.byKey(this.teamManager.teamFor(player));
                 TeamData theTowersTeam = teamMap.get(gameTeam);
                 if (theTowersTeam instanceof TeamData && theTowersTeam.health > 0) {
-                    player.changeGameMode(GameMode.SURVIVAL);
+                    player.setGameMode(GameType.SURVIVAL);
                     this.resetPlayer(player);
                     this.resetPlayerInventory(player);
                     this.spawnPlayerAtTheirSpawn(player);
                     return;
                 }
             }
-            player.changeGameMode(GameMode.SPECTATOR);
+            player.setGameMode(GameType.SPECTATOR);
             this.resetPlayer(player);
             this.spawnPlayerAtCenter(player);
         });
     }
 
-    public void resetPlayerInventory(ServerPlayerEntity player) {
+    public void resetPlayerInventory(ServerPlayer player) {
         GameTeam gameTeam = this.teams.byKey(this.teamManager.teamFor(player));
         if (gameTeam != null) {
-            player.equipStack(EquipmentSlot.HEAD, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_HELMET))).setUnbreakable().build());
-            player.equipStack(EquipmentSlot.CHEST, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_CHESTPLATE))).setUnbreakable().build());
-            player.equipStack(EquipmentSlot.LEGS, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_LEGGINGS))).addEnchantment(this.world, Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
-            player.equipStack(EquipmentSlot.FEET, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_BOOTS))).setUnbreakable().build());
-            player.getInventory().insertStack(ItemStackBuilder.of(Items.WOODEN_SWORD).build());
-            player.getInventory().insertStack(ItemStackBuilder.of(Items.WOODEN_PICKAXE).build());
-            player.getInventory().insertStack(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(6).build());
+            player.setItemSlot(EquipmentSlot.HEAD, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_HELMET))).setUnbreakable().build());
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_CHESTPLATE))).setUnbreakable().build());
+            player.setItemSlot(EquipmentSlot.LEGS, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_LEGGINGS))).addEnchantment(this.world, Enchantments.PROJECTILE_PROTECTION, 2).setUnbreakable().build());
+            player.setItemSlot(EquipmentSlot.FEET, ItemStackBuilder.of(gameTeam.config().applyDye(new ItemStack(Items.LEATHER_BOOTS))).setUnbreakable().build());
+            player.getInventory().add(ItemStackBuilder.of(Items.WOODEN_SWORD).build());
+            player.getInventory().add(ItemStackBuilder.of(Items.WOODEN_PICKAXE).build());
+            player.getInventory().add(ItemStackBuilder.of(Items.BAKED_POTATO).setCount(6).build());
         }
     }
 
-    public void resetPlayer(ServerPlayerEntity player) {
+    public void resetPlayer(ServerPlayer player) {
         this.clearPlayer(player);
-        player.getInventory().clear();
-        player.getEnderChestInventory().clear();
-        player.clearStatusEffects();
-        player.getHungerManager().setFoodLevel(20);
-        player.setExperienceLevel(0);
+        player.getInventory().clearContent();
+        player.getEnderChestInventory().clearContent();
+        player.removeAllEffects();
+        player.getFoodData().setFoodLevel(20);
+        player.setExperienceLevels(0);
         player.setExperiencePoints(0);
         player.setHealth(player.getMaxHealth());
     }
 
-    public void clearPlayer(ServerPlayerEntity player) {
-        player.extinguish();
+    public void clearPlayer(ServerPlayer player) {
+        player.clearFire();
         player.fallDistance = 0.0F;
     }
 
-    public void spawnPlayerAtCenter(ServerPlayerEntity player) {
+    public void spawnPlayerAtCenter(ServerPlayer player) {
         this.spawnPlayerAt(player, this.map.spawn(), 0.0F, 0.0F);
     }
 
-    public void spawnPlayerAtTheirSpawn(ServerPlayerEntity player) {
+    public void spawnPlayerAtTheirSpawn(ServerPlayer player) {
         TeamRegion region = this.map.teamRegions().get(this.teamManager.teamFor(player));
-        Vec3d spawnPosition = region.spawn().center();
+        Vec3 spawnPosition = region.spawn().center();
         this.spawnPlayerAt(player, spawnPosition, region.spawnYaw(), region.spawnPitch());
     }
 
-    public void spawnPlayerAt(ServerPlayerEntity player, Vec3d pos, float yaw, float pitch) {
-        player.teleport(this.world, pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, pitch, false);
-        player.setVelocity(Vec3d.ZERO);
+    public void spawnPlayerAt(ServerPlayer player, Vec3 pos, float yaw, float pitch) {
+        player.teleportTo(this.world, pos.x(), pos.y(), pos.z(), Set.of(), yaw, pitch, false);
+        player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0f;
     }
 
     // GENERAL LISTENERS
-    private EventResult dropItem(PlayerEntity player, int i, ItemStack stack) {
+    private EventResult dropItem(Player player, int i, ItemStack stack) {
         if (canStackBeDropped(stack)) {
             return EventResult.ALLOW;
         } else {
-            Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_drop_armor"));
-            player.sendMessage(msg, false);
+            Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_drop_armor"));
+            player.displayClientMessage(msg, false);
             return EventResult.DENY;
         }
     }
 
-    private EventResult killPlayer(ServerPlayerEntity player, DamageSource source) {
+    private EventResult killPlayer(ServerPlayer player, DamageSource source) {
         TowersParticipant participant = this.participantMap.get(player);
         if (!this.gameSpace.getPlayers().contains(player)) {
             return EventResult.PASS;
@@ -420,42 +420,42 @@ public class TowersActive {
                 return EventResult.DENY;
             }
             participant.ticksUntilRespawn = this.config.respawnCooldown() * 20L;
-            player.changeGameMode(GameMode.SPECTATOR);
-            for (int i = 0; i < player.getInventory().size(); ++i) {
-                ItemStack stack = player.getInventory().getStack(i);
+            player.setGameMode(GameType.SPECTATOR);
+            for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
+                ItemStack stack = player.getInventory().getItem(i);
                 if (canStackBeDropped(stack)) {
-                    ItemScatterer.spawn(this.world, player.getBlockPos().getX(), player.getBlockPos().getY(), player.getBlockPos().getZ(), player.getInventory().getStack(i));
+                    Containers.dropItemStack(this.world, player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ(), player.getInventory().getItem(i));
                 }
             }
-            Text msg = FormattingUtil.format(FormattingUtil.SKULL_SYMBOL, FormattingUtil.DEATH_STYLE, source.getDeathMessage(player).copyContentOnly());
+            Component msg = FormattingUtil.format(FormattingUtil.SKULL_SYMBOL, FormattingUtil.DEATH_STYLE, source.getLocalizedDeathMessage(player).plainCopy());
             this.gameSpace.getPlayers().sendMessage(msg);
 
             this.resetPlayer(player);
-            this.spawnPlayerAt(player, player.getPos().withAxis(Direction.Axis.Y, 1000), 0.0F, 0.0F);
+            this.spawnPlayerAt(player, player.position().with(Direction.Axis.Y, 1000), 0.0F, 0.0F);
 
-            player.networkHandler.sendPacket(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.GAME_MODE_CHANGED, 3));
-            PlayerAbilities abilities = new PlayerAbilities();
-            abilities.allowFlying = false;
-            player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(abilities));
-            player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, (this.config.respawnCooldown() + 1) * 20, 1, true, false));
-            player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOW_FALLING, (this.config.respawnCooldown() + 1) * 20, 10, true, false));
+            player.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.CHANGE_GAME_MODE, 3));
+            Abilities abilities = new Abilities();
+            abilities.mayfly = false;
+            player.connection.send(new ClientboundPlayerAbilitiesPacket(abilities));
+            player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, (this.config.respawnCooldown() + 1) * 20, 1, true, false));
+            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, (this.config.respawnCooldown() + 1) * 20, 10, true, false));
         }
         return EventResult.DENY;
     }
 
-    private EventResult placeBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
+    private EventResult placeBlock(ServerPlayer playerEntity, ServerLevel world, BlockPos pos, BlockState state, UseOnContext itemUsageContext) {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
-                Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
-                playerEntity.sendMessage(msg, false);
+                Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_place"));
+                playerEntity.displayClientMessage(msg, false);
                 return EventResult.DENY;
             }
         }
         for (GameTeamKey teamKey : this.teamMap.keySet()) {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
-                    Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_place"));
-                    playerEntity.sendMessage(msg, false);
+                    Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_place"));
+                    playerEntity.displayClientMessage(msg, false);
                     return EventResult.DENY;
                 }
             }
@@ -463,41 +463,41 @@ public class TowersActive {
         return EventResult.PASS;
     }
 
-    private ActionResult useBlock(ServerPlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult) {
+    private InteractionResult useBlock(ServerPlayer playerEntity, InteractionHand hand, BlockHitResult blockHitResult) {
         // TODO: can't place blocks when trying to place on the side of a protected block. Must fix.
         BlockPos pos = blockHitResult.getBlockPos();
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
-                Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
-                playerEntity.sendMessage(msg, false);
-                return ActionResult.FAIL;
+                Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_use"));
+                playerEntity.displayClientMessage(msg, false);
+                return InteractionResult.FAIL;
             }
         }
         for (GameTeamKey teamKey : this.teamMap.keySet()) {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
-                    Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_use"));
-                    playerEntity.sendMessage(msg, false);
-                    return ActionResult.FAIL;
+                    Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_use"));
+                    playerEntity.displayClientMessage(msg, false);
+                    return InteractionResult.FAIL;
                 }
             }
         }
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
-    private EventResult breakBlock(ServerPlayerEntity playerEntity, ServerWorld world, BlockPos pos) {
+    private EventResult breakBlock(ServerPlayer playerEntity, ServerLevel world, BlockPos pos) {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
-                Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
-                playerEntity.sendMessage(msg, false);
+                Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_break"));
+                playerEntity.displayClientMessage(msg, false);
                 return EventResult.DENY;
             }
         }
         for (GameTeamKey teamKey : this.teamMap.keySet()) {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
-                    Text msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Text.translatable("text.the_towers.cannot_break"));
-                    playerEntity.sendMessage(msg, false);
+                    Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_break"));
+                    playerEntity.displayClientMessage(msg, false);
                     return EventResult.DENY;
                 }
             }

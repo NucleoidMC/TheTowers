@@ -5,8 +5,6 @@ import fr.hugman.plasmid.api.game_map.GameMapLoadResult;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.generator.ItemGenerator;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
@@ -20,10 +18,12 @@ import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 public record TowersMap(
-        Vec3d spawn,
-        Vec3d rules,
+        Vec3 spawn,
+        Vec3 rules,
         List<BlockBounds> protectedBounds,
         List<ItemGenerator> itemGenerators,
         Map<GameTeamKey, TeamRegion> teamRegions,
@@ -34,14 +34,14 @@ public record TowersMap(
      */
     public static TowersMap build(GameActivity activity, GameMapLoadResult result) throws GameOpenException {
         MapTemplateMetadata metadata = result.templateMetadata().orElseThrow();
-        Vec3d spawn = new Vec3d(0, 50, 0);
+        Vec3 spawn = new Vec3(0, 50, 0);
         BlockBounds spawnBounds = metadata.getFirstRegionBounds("spawn");
         if (spawnBounds != null) {
             spawn = spawnBounds.center();
         } else {
             TheTowers.LOGGER.warn("Missing spawn position, set to default [0 50 0]");
         }
-        Vec3d rules = spawn;
+        Vec3 rules = spawn;
         BlockBounds rulesBounds = metadata.getFirstRegionBounds("rules");
         if (rulesBounds != null) {
             rules = rulesBounds.center();
@@ -65,7 +65,7 @@ public record TowersMap(
                 TeamRegion region = TeamRegion.fromTemplate(++i, metadata);
                 teamRegions.put(team.key(), region);
             } catch (NullPointerException e) {
-                throw new GameOpenException(Text.translatable("error.the_towers.team_region_load", team.key(), i), e);
+                throw new GameOpenException(Component.translatable("error.the_towers.team_region_load", team.key(), i), e);
             }
         }
 

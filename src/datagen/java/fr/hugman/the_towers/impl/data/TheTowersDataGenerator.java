@@ -7,7 +7,7 @@ import fr.hugman.the_towers.api.datagen.provider.TheTowersGameProvider;
 import fr.hugman.the_towers.api.datagen.provider.TheTowersItemGeneratorProvider;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import net.minecraft.registry.RegistryBuilder;
+import net.minecraft.core.RegistrySetBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class TheTowersDataGenerator implements DataGeneratorEntrypoint {
@@ -24,9 +24,9 @@ public class TheTowersDataGenerator implements DataGeneratorEntrypoint {
     }
 
     @Override
-    public void buildRegistry(RegistryBuilder registryBuilder) {
-        registryBuilder.addRegistry(PlasmidRegistryKeys.GAME_MAP, TheTowersGameMapProvider::register);
-        registryBuilder.addRegistry(PlasmidRegistryKeys.GAME_CONFIG, TheTowersGameProvider::register);
+    public void buildRegistry(RegistrySetBuilder registryBuilder) {
+        registryBuilder.add(PlasmidRegistryKeys.GAME_MAP, TheTowersGameMapProvider::register);
+        registryBuilder.add(PlasmidRegistryKeys.GAME_CONFIG, TheTowersGameProvider::register);
     }
 
     @Override

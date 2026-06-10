@@ -5,14 +5,14 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import fr.hugman.plasmid.api.game_map.GameMap;
 import net.minecraft.SharedConstants;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.core.Holder;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 import xyz.nucleoid.plasmid.api.game.common.team.provider.TeamListProvider;
 
 public record TowersConfig(
         WaitingLobbyConfig playerConfig,
         TeamListProvider teamConfig,
-        RegistryEntry<GameMap> map,
+        Holder<GameMap> map,
         int maxHealth,
         boolean healthStealth,
         int respawnCooldown,
@@ -32,7 +32,7 @@ public record TowersConfig(
             Codec.INT.optionalFieldOf("refill_cooldown", DEFAULT_REFILL_COOLDOWN).forGetter(TowersConfig::refillCooldown)
     ).apply(instance, TowersConfig::new));
 
-    public TowersConfig(WaitingLobbyConfig playerConfig, TeamListProvider teamConfig, RegistryEntry<GameMap> map, int maxHealth) {
+    public TowersConfig(WaitingLobbyConfig playerConfig, TeamListProvider teamConfig, Holder<GameMap> map, int maxHealth) {
         this(playerConfig, teamConfig, map, maxHealth, DEFAULT_HEALTH_SLEATH, DEFAULT_RESPAWN_COOLDOWN, DEFAULT_REFILL_COOLDOWN);
     }
 }
