@@ -21,11 +21,11 @@
     ]
   },
   "depends": {
-    "java": ">=21",
-    "minecraft": ">=1.21.4",
-    "fabricloader": ">=0.9.1",
-    "fabric-api": ">=0.86.1",
-    "plasmid": "0.6.x"
+    "java": ">=25",
+    "minecraft": ">=26.1-",
+    "plasmid": ">=0.7",
+    "fabricloader": ">=0.16",
+    "fabric-api": "*"
   },
   "custom": {
     "mc-publish": {

@@ -2,7 +2,7 @@ package fr.hugman.the_towers.api.datagen.provider;
 
 import fr.hugman.the_towers.api.map.generator.TheTowersGenerators;
 import fr.hugman.the_towers.map.generator.ItemGeneratorConfig;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
@@ -10,7 +10,7 @@ import net.minecraft.world.item.Items;
 import java.util.concurrent.CompletableFuture;
 
 public class TheTowersItemGeneratorProvider extends FabricDynamicRegistryProvider {
-    public TheTowersItemGeneratorProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+    public TheTowersItemGeneratorProvider(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 

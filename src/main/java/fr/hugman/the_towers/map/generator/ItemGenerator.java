@@ -44,13 +44,13 @@ public record ItemGenerator(ItemGeneratorConfig type, Vec3 pos) {
 
     public void tick(ServerLevel world, long gameTime) {
         if (gameTime % type.interval() == 0) {
-            ItemEntity itemEntity = new ItemEntity(world, pos.x(), pos.y(), pos.z(), type.stack().copy());
+            ItemEntity itemEntity = new ItemEntity(world, pos.x(), pos.y(), pos.z(), type.stack().create());
             itemEntity.setDeltaMovement(0.0D, 0.2D, 0.0D);
             world.addFreshEntity(itemEntity);
             world.sendParticles(ParticleTypes.CLOUD, pos.x(), pos.y(), pos.z(), 2, 0.0D, 0.0D, 0.0D, 0.0D);
             world.playSound(null, pos.x(), pos.y(), pos.z(), SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.8F, 0.7F);
         }
-        if (world.random.nextFloat() * 2 < (float) (gameTime % type.interval()) / type.interval())
+        if (world.getRandom().nextFloat() * 2 < (float) (gameTime % type.interval()) / type.interval())
             world.sendParticles(ParticleTypes.SMOKE, pos.x(), pos.y(), pos.z(), 1, 0.01D, 0.01D, 0.01D, 0.0D);
     }
 }

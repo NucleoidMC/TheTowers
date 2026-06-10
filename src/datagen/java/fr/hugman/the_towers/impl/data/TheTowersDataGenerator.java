@@ -26,7 +26,7 @@ public class TheTowersDataGenerator implements DataGeneratorEntrypoint {
     @Override
     public void buildRegistry(RegistrySetBuilder registryBuilder) {
         registryBuilder.add(PlasmidRegistryKeys.GAME_MAP, TheTowersGameMapProvider::register);
-        registryBuilder.add(PlasmidRegistryKeys.GAME_CONFIG, TheTowersGameProvider::register);
+        registryBuilder.add(xyz.nucleoid.plasmid.api.registry.PlasmidRegistryKeys.GAME_CONFIG, TheTowersGameProvider::register);
     }
 
     @Override

@@ -52,7 +52,7 @@ public record TowersWaiting(
             }
 
             TowersMap map = TowersMap.build(activity, mapLoadResult);
-            ServerLevel world = activity.getGameSpace().getWorlds().add(map.worldConfig());
+            ServerLevel world = activity.getGameSpace().getLevels().add(map.levelConfig());
 
             GameWaitingLobby.addTo(activity, config.playerConfig());
 

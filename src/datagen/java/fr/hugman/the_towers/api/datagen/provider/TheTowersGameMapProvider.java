@@ -4,24 +4,23 @@ import fr.hugman.plasmid.api.author.Author;
 import fr.hugman.plasmid.api.game_map.GameMap;
 import fr.hugman.plasmid.api.game_map.GameMapMetadata;
 import fr.hugman.plasmid.api.game_map.TemplateGameMap;
-import fr.hugman.plasmid.api.game_map.template.processor.TeamColorMapTemplateProcessor;
 import fr.hugman.plasmid.api.registry.PlasmidRegistryKeys;
 import fr.hugman.the_towers.TheTowers;
 import fr.hugman.the_towers.api.author.TheTowersUUIDs;
 import fr.hugman.the_towers.api.game_map.TheTowersGameMaps;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
-import java.util.Arrays;
+import xyz.nucleoid.plasmid.api.map.template.processor.TeamColorMapTemplateProcessor;
+
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class TheTowersGameMapProvider extends FabricDynamicRegistryProvider {
-    public TheTowersGameMapProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+    public TheTowersGameMapProvider(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 

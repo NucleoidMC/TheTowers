@@ -3,30 +3,30 @@ package fr.hugman.plasmid.api.game_map;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
+import net.minecraft.resources.Identifier;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
-import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.level.generator.TemplateChunkGenerator;
 import xyz.nucleoid.plasmid.api.map.MapLoadContexts;
 import xyz.nucleoid.plasmid.api.map.template.processor.MapTemplateProcessor;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.context.ContextMap;
 
 public record TemplateGameMap(
-        ResourceLocation id,
+        Identifier id,
         Optional<GameMapMetadata> metadata,
         List<MapTemplateProcessor> processors
 ) implements GameMap {
     public static final MapCodec<TemplateGameMap> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
+            Identifier.CODEC.fieldOf("id").forGetter(TemplateGameMap::id),
             GameMapMetadata.CODEC.optionalFieldOf("metadata").forGetter(TemplateGameMap::metadata),
             MapTemplateProcessor.CODEC.listOf().optionalFieldOf("processors", List.of()).forGetter(TemplateGameMap::processors)
     ).apply(instance, TemplateGameMap::new));
 
-    public TemplateGameMap(ResourceLocation id, GameMapMetadata metadata, MapTemplateProcessor... processors) {
+    public TemplateGameMap(Identifier id, GameMapMetadata metadata, MapTemplateProcessor... processors) {
         this(id, Optional.of(metadata), List.of(processors));
     }
 

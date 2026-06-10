@@ -403,7 +403,7 @@ public class TowersActive {
             return EventResult.ALLOW;
         } else {
             Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_drop_armor"));
-            player.displayClientMessage(msg, false);
+            player.sendSystemMessage(msg);
             return EventResult.DENY;
         }
     }
@@ -447,7 +447,7 @@ public class TowersActive {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
                 Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_place"));
-                playerEntity.displayClientMessage(msg, false);
+                playerEntity.sendSystemMessage(msg);
                 return EventResult.DENY;
             }
         }
@@ -455,7 +455,7 @@ public class TowersActive {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_place"));
-                    playerEntity.displayClientMessage(msg, false);
+                    playerEntity.sendSystemMessage(msg);
                     return EventResult.DENY;
                 }
             }
@@ -469,7 +469,7 @@ public class TowersActive {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
                 Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_use"));
-                playerEntity.displayClientMessage(msg, false);
+                playerEntity.sendSystemMessage(msg);
                 return InteractionResult.FAIL;
             }
         }
@@ -477,7 +477,7 @@ public class TowersActive {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_use"));
-                    playerEntity.displayClientMessage(msg, false);
+                    playerEntity.sendSystemMessage(msg);
                     return InteractionResult.FAIL;
                 }
             }
@@ -489,7 +489,7 @@ public class TowersActive {
         for (BlockBounds bounds : this.map.protectedBounds()) {
             if (bounds.contains(pos)) {
                 Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_break"));
-                playerEntity.displayClientMessage(msg, false);
+                playerEntity.sendSystemMessage(msg);
                 return EventResult.DENY;
             }
         }
@@ -497,7 +497,7 @@ public class TowersActive {
             if (teamKey != teamManager.teamFor(playerEntity)) {
                 if (this.map.teamRegions().get(teamKey).domains().contains(pos.asLong())) {
                     Component msg = FormattingUtil.format(FormattingUtil.GENERAL_SYMBOL, FormattingUtil.WARNING_STYLE, Component.translatable("text.the_towers.cannot_break"));
-                    playerEntity.displayClientMessage(msg, false);
+                    playerEntity.sendSystemMessage(msg);
                     return EventResult.DENY;
                 }
             }

@@ -3,16 +3,13 @@ package fr.hugman.the_towers.map;
 import fr.hugman.plasmid.api.game.attachment.PlasmidGameAttachments;
 import fr.hugman.plasmid.api.game_map.GameMapLoadResult;
 import fr.hugman.the_towers.TheTowers;
-import fr.hugman.the_towers.config.TowersConfig;
 import fr.hugman.the_towers.map.generator.ItemGenerator;
-import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.TemplateRegion;
 import xyz.nucleoid.plasmid.api.game.GameActivity;
-import xyz.nucleoid.plasmid.api.game.GameOpenContext;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
-import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeam;
 import xyz.nucleoid.plasmid.api.game.common.team.GameTeamKey;
 
@@ -27,7 +24,7 @@ public record TowersMap(
         List<BlockBounds> protectedBounds,
         List<ItemGenerator> itemGenerators,
         Map<GameTeamKey, TeamRegion> teamRegions,
-        RuntimeWorldConfig worldConfig
+        RuntimeLevelConfig levelConfig
 ) {
     /**
      * Creates the map from a map template by reading its metadata.
@@ -69,8 +66,8 @@ public record TowersMap(
             }
         }
 
-        var worldConfig = new RuntimeWorldConfig().setGenerator(result.chunkGenerator());
+        var levelConfig = new RuntimeLevelConfig().setGenerator(result.chunkGenerator());
 
-        return new TowersMap(spawn, rules, protectedBounds, itemGenerators, teamRegions, worldConfig);
+        return new TowersMap(spawn, rules, protectedBounds, itemGenerators, teamRegions, levelConfig);
     }
 }

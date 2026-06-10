@@ -10,10 +10,11 @@ import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 
-public record ItemGeneratorConfig(ItemStack stack, long interval) {
+public record ItemGeneratorConfig(ItemStackTemplate stack, long interval) {
     public static final Codec<ItemGeneratorConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ItemStack.SINGLE_ITEM_CODEC.fieldOf("stack").forGetter(ItemGeneratorConfig::stack),
+            ItemStackTemplate.CODEC.fieldOf("stack").forGetter(ItemGeneratorConfig::stack),
             Codec.LONG.fieldOf("interval").forGetter(ItemGeneratorConfig::interval)
     ).apply(instance, ItemGeneratorConfig::new));
 
@@ -22,6 +23,6 @@ public record ItemGeneratorConfig(ItemStack stack, long interval) {
     public static final Codec<List<HolderSet<ItemGeneratorConfig>>> LISTS_CODEC = RegistryCodecs.homogeneousList(TheTowersRegistryKeys.GENERATOR, CODEC, true).listOf();
 
     public ItemGeneratorConfig(Item item, long interval) {
-        this(new ItemStack(item), interval);
+        this(new ItemStackTemplate(item), interval);
     }
 }
